@@ -27,7 +27,7 @@ clean:
 
 
 kernel:
-	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/$(wildcard *.c) -o $(OUTPUT_FOLDER)/kernel.o
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel_loader.s -o $(OUTPUT_FOLDER)/kernel_loader.o
 # TODO: Compile C file with CFLAGS
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
