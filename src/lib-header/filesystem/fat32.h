@@ -40,6 +40,15 @@
 // Boot sector signature for this file system "FAT32 - IF2230 edition"
 extern const uint8_t fs_signature[BLOCK_SIZE];
 
+struct DateTime {
+    uint8_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+};
+
 // Cluster buffer data type - @param buf Byte buffer with size of CLUSTER_SIZE
 struct ClusterBuffer {
     uint8_t buf[CLUSTER_SIZE];
