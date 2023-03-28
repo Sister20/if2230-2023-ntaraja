@@ -12,6 +12,16 @@ void framebuffer_set_cursor(uint8_t r, uint8_t c) {
 	out(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
+void framebuffer_get_cursor(uint8_t *r, uint8_t *c) {
+    uint16_t pos;
+    out(0x3D4, 0x0F);
+    pos = in(0x3D5);
+    out(0x3D4, 0x0E);
+    pos |= ((uint16_t)in(0x3D5)) << 8;
+    *r = pos / 80;
+    *c = pos % 80;
+}
+
 void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) {
     // TODO : Implement    
     uint8_t attrib = (bg << 4) | (fg&0x0F);
