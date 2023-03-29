@@ -15,7 +15,7 @@
 
 ## Milestone 2
 - [x] Interrupt
-- [ ] Keyboard Device Driver
+- [x] Keyboard Device Driver
 - [ ] Filesystem
 
 ## Author
