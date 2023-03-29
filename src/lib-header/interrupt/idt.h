@@ -42,8 +42,8 @@ struct IDTGate {
     uint8_t _r_bit_2 : 3;
     uint8_t gate_32 : 1;
     uint8_t _r_bit_3 : 1;
-    uint8_t valid_bit : 2;
-    uint8_t privilege : 1; //dpl - p
+    uint8_t privilege : 2; //dpl - p
+    uint8_t valid_bit : 1;
     uint16_t offset_high;
 
     // TODO : Implement
@@ -58,7 +58,7 @@ struct IDTGate {
 // TODO : Implement
 // ...
 struct InterruptDescriptorTable {
-    struct IDTGate table[256];
+    struct IDTGate table[IDT_MAX_ENTRY_COUNT];
 } __attribute__((packed));
 
 /**
