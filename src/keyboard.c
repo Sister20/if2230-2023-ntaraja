@@ -23,17 +23,22 @@ const char keyboard_scancode_1_to_ascii_map[256] = {
       0,    0,   0,   0,   0,   0,   0,   0,    0,   0,   0,    0,    0,   0,    0,    0,
 };
 
-static struct KeyboardDriverState keyboard_state;
+struct KeyboardDriverState keyboard_state;
 
 void keyboard_clear_buffer(void){
     keyboard_state.buffer_index = 0;
     memset(keyboard_state.keyboard_buffer, 0, KEYBOARD_BUFFER_SIZE);
 }
 
-void keyboard_insert_at(char c){
-    for(uint8_t i = keyboard_state.buffer_index; i < KEYBOARD_BUFFER_SIZE-1; i++)
-        keyboard_state.keyboard_buffer[i+1] = keyboard_state.keyboard_buffer[i];
-    keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = c;
+void keyboard_insert_at(char ch){
+    uint8_t r,c;
+    framebuffer_get_cursor(&r, &c);
+    for(uint8_t i = KEYBOARD_BUFFER_SIZE-1; i > keyboard_state.buffer_index; i--){
+        keyboard_state.keyboard_buffer[i] = keyboard_state.keyboard_buffer[i-1];
+        framebuffer_write(r,i,keyboard_state.keyboard_buffer[i],0x0F,0x00);
+    }
+    keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = ch;
+    framebuffer_write(r,keyboard_state.buffer_index,ch,0x0F,0x00);
     keyboard_state.buffer_index++;
     keyboard_state.buffer_index_max = keyboard_state.buffer_index > keyboard_state.buffer_index_max ? keyboard_state.buffer_index : keyboard_state.buffer_index_max;
 }
