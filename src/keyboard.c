@@ -59,23 +59,28 @@ void keyboard_insert(char ch){
 /**
  * 
 */
-void keyboard_delete_at(void){
-    //also bring back all characters one
-    uint8_t r,c;
+void keyboard_delete(void){
+    // no need to delete if buffer is empty
+    if(keyboard_state.buffer_index == 0){
+        return;
+    }
+    uint8_t r,c,row,col;
     framebuffer_get_cursor(&r, &c);
-    keyboard_state.buffer_index = keyboard_state.buffer_index > 0 ? keyboard_state.buffer_index-1 : 0;
-    keyboard_state.buffer_index_max = keyboard_state.buffer_index_max > 0 ? keyboard_state.buffer_index_max-1 : 0;
-    for(uint8_t i = keyboard_state.buffer_index; i <= keyboard_state.buffer_index_max; i++){
-        if(i!=KEYBOARD_BUFFER_SIZE-1){
-            keyboard_state.keyboard_buffer[i] = keyboard_state.keyboard_buffer[i+1];
-        }
+    for(uint8_t ii = keyboard_state.buffer_index-1; ii <= keyboard_state.buffer_index_max; ii++){
+        keyboard_state.keyboard_buffer[ii] = keyboard_state.keyboard_buffer[ii+1];
+        col = c + ii - keyboard_state.buffer_index;
+        row = r + (col / 80);
+        col = col % 80;
+        framebuffer_write(row,col,keyboard_state.keyboard_buffer[ii],0x0F,0x00);
     }
-    keyboard_state.keyboard_buffer[keyboard_state.buffer_index_max] = 0;
-    for(uint8_t i = keyboard_state.buffer_index; i <= keyboard_state.buffer_index_max; i++){
-        framebuffer_write(r,i,keyboard_state.keyboard_buffer[i],0x0F,0x00);
-    }
-    framebuffer_write(r,keyboard_state.buffer_index_max,0x00,0x0F,0x00);
-    framebuffer_set_cursor(r,keyboard_state.buffer_index);
+    keyboard_state.keyboard_buffer[keyboard_state.buffer_index_max] = ' ';
+    col = c + keyboard_state.buffer_index_max - keyboard_state.buffer_index;
+    row = r + (col / 80);
+    col = col % 80;
+    framebuffer_write(row,col,' ',0x0F,0x00);
+    framebuffer_set_cursor(r,--c);
+    keyboard_state.buffer_index--;
+    keyboard_state.buffer_index_max--;
 }
 
 void keyboard_state_deactivate(void){
@@ -103,7 +108,7 @@ void keyboard_isr(void) {
         uint8_t r, c;
         framebuffer_get_cursor(&r, &c);
         if(mapped_char == '\b'){
-            keyboard_delete_at();
+            keyboard_delete();
         }
         else if(mapped_char == '\n'){
             framebuffer_set_cursor(r+1,0);
