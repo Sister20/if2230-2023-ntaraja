@@ -47,14 +47,22 @@ void keyboard_isr(void) {
     else {
         uint8_t  scancode    = in(KEYBOARD_DATA_PORT);
         char     mapped_char = keyboard_scancode_1_to_ascii_map[scancode];
-        // TODO : Implement scancode processing
         uint8_t r, c;
         framebuffer_get_cursor(&r, &c);
         if(mapped_char == '\b'){
             keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = ' ';
             keyboard_state.buffer_index--;
-            framebuffer_write(r,c-1,' ',0x0F,0x00);
-            framebuffer_set_cursor(r,c-1);
+            if(c == 0 && r != 0){
+                c = 0;
+                r--;
+            } else if (c == 0){
+                c = 0;
+                r = 0;
+            }
+            else
+                c--;
+            framebuffer_write(r,c,' ',0x0F,0x00);
+            framebuffer_set_cursor(r,c);
             keyboard_state.buffer_index--;
         }
         else if(mapped_char == '\n'){
