@@ -33,18 +33,12 @@ void keyboard_clear_buffer(void){
 /**
  * @brief      Write a character to the keyboard buffer at the current cursor position
 */
-void keyboard_insert_at(char ch){
+void keyboard_insert(char ch){
     if(keyboard_state.buffer_index_max == KEYBOARD_BUFFER_SIZE - 1){
-        return; // handled well
+        return;
     }
     uint8_t r,c,col,row;
     framebuffer_get_cursor(&r, &c);
-    // for(uint8_t i = keyboard_state.buffer_index_max; i > keyboard_state.buffer_index; i--){
-    //     keyboard_state.keyboard_buffer[i] = keyboard_state.keyboard_buffer[i-1];
-    //     col = c + i - keyboard_state.buffer_index;
-    //     row = r + (col / 80);
-    //     framebuffer_write(row,col,keyboard_state.keyboard_buffer[i],0x0F,0x00);
-    // }
     for(uint8_t ii = keyboard_state.buffer_index_max; ii > keyboard_state.buffer_index; ii--){
         keyboard_state.keyboard_buffer[ii] = keyboard_state.keyboard_buffer[ii-1];
         col = c + ii - keyboard_state.buffer_index;
@@ -61,6 +55,9 @@ void keyboard_insert_at(char ch){
     framebuffer_set_cursor(r,++c);
 }
 
+/**
+ * 
+*/
 void keyboard_delete_at(void){
     //also bring back all characters one
     uint8_t r,c;
@@ -118,7 +115,7 @@ void keyboard_isr(void) {
         // tab is 4 spaces, default of most IDEs
         else if(mapped_char == '\t'){
             for(int ii = 0 ; ii <  4 && keyboard_state.buffer_index < KEYBOARD_BUFFER_SIZE - 1; ii++){
-                keyboard_insert_at(' ');
+                keyboard_insert(' ');
             }
         }
         // handling left right arrow
@@ -147,9 +144,9 @@ void keyboard_isr(void) {
             }
         }
         else if(mapped_char != 0){
-            // must enter if buffer is full
+            // must press enter if buffer is full
             if(keyboard_state.buffer_index_max < KEYBOARD_BUFFER_SIZE-1){
-                keyboard_insert_at(mapped_char);
+                keyboard_insert(mapped_char);
             }
         }
     }
