@@ -30,32 +30,53 @@ void keyboard_clear_buffer(void){
     memset(keyboard_state.keyboard_buffer, 0, KEYBOARD_BUFFER_SIZE);
 }
 
+/**
+ * @brief      Write a character to the keyboard buffer at the current cursor position
+*/
 void keyboard_insert_at(char ch){
-    uint8_t r,c;
+    if(keyboard_state.buffer_index_max == KEYBOARD_BUFFER_SIZE - 1){
+        return; // handled well
+    }
+    uint8_t r,c,col,row;
     framebuffer_get_cursor(&r, &c);
-    for(uint8_t i = KEYBOARD_BUFFER_SIZE-1; i > keyboard_state.buffer_index; i--){
-        keyboard_state.keyboard_buffer[i] = keyboard_state.keyboard_buffer[i-1];
-        framebuffer_write(r,i,keyboard_state.keyboard_buffer[i],0x0F,0x00);
+    // for(uint8_t i = keyboard_state.buffer_index_max; i > keyboard_state.buffer_index; i--){
+    //     keyboard_state.keyboard_buffer[i] = keyboard_state.keyboard_buffer[i-1];
+    //     col = c + i - keyboard_state.buffer_index;
+    //     row = r + (col / 80);
+    //     framebuffer_write(row,col,keyboard_state.keyboard_buffer[i],0x0F,0x00);
+    // }
+    for(uint8_t ii = keyboard_state.buffer_index_max; ii > keyboard_state.buffer_index; ii--){
+        keyboard_state.keyboard_buffer[ii] = keyboard_state.keyboard_buffer[ii-1];
+        col = c + ii - keyboard_state.buffer_index;
+        row = r + (col / 80);
+        col = col % 80;
+        framebuffer_write(row,col,keyboard_state.keyboard_buffer[ii],0x0F,0x00);
     }
     keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = ch;
-    framebuffer_write(r,keyboard_state.buffer_index,ch,0x0F,0x00);
+    col = c;
+    row = r + (col / 80);
+    framebuffer_write(row,col,ch,0x0F,0x00);
     keyboard_state.buffer_index++;
-    keyboard_state.buffer_index_max = keyboard_state.buffer_index > keyboard_state.buffer_index_max ? keyboard_state.buffer_index : keyboard_state.buffer_index_max;
-    framebuffer_set_cursor(r,keyboard_state.buffer_index);
+    keyboard_state.buffer_index_max++;
+    framebuffer_set_cursor(r,++c);
 }
 
 void keyboard_delete_at(void){
     //also bring back all characters one
     uint8_t r,c;
     framebuffer_get_cursor(&r, &c);
-    for(uint8_t i = keyboard_state.buffer_index; i < keyboard_state.buffer_index_max; i++){
-        keyboard_state.keyboard_buffer[i] = keyboard_state.keyboard_buffer[i+1];
+    keyboard_state.buffer_index = keyboard_state.buffer_index > 0 ? keyboard_state.buffer_index-1 : 0;
+    keyboard_state.buffer_index_max = keyboard_state.buffer_index_max > 0 ? keyboard_state.buffer_index_max-1 : 0;
+    for(uint8_t i = keyboard_state.buffer_index; i <= keyboard_state.buffer_index_max; i++){
+        if(i!=KEYBOARD_BUFFER_SIZE-1){
+            keyboard_state.keyboard_buffer[i] = keyboard_state.keyboard_buffer[i+1];
+        }
+    }
+    keyboard_state.keyboard_buffer[keyboard_state.buffer_index_max] = 0;
+    for(uint8_t i = keyboard_state.buffer_index; i <= keyboard_state.buffer_index_max; i++){
         framebuffer_write(r,i,keyboard_state.keyboard_buffer[i],0x0F,0x00);
     }
-    keyboard_state.keyboard_buffer[keyboard_state.buffer_index_max-1] = 0;
-    framebuffer_write(r,keyboard_state.buffer_index_max-1,' ',0x0F,0x00);
-    keyboard_state.buffer_index--;
-    keyboard_state.buffer_index_max--;
+    framebuffer_write(r,keyboard_state.buffer_index_max,0x00,0x0F,0x00);
     framebuffer_set_cursor(r,keyboard_state.buffer_index);
 }
 
@@ -103,13 +124,26 @@ void keyboard_isr(void) {
         // handling left right arrow
         else if(mapped_char == 0){
             if(scancode == 0x4B){
-                c = (c == 0) ? 0 : c-1;
-                framebuffer_set_cursor(r,c);
-                keyboard_state.buffer_index--;
+                if(keyboard_state.buffer_index > 0){
+                    keyboard_state.buffer_index--;
+                    if(c == 0){
+                        framebuffer_set_cursor(r-1,79);
+                    }
+                    else{
+                        framebuffer_set_cursor(r,c-1);
+                    }
+                }
             }
             else if(scancode == 0x4D){
-                c = (c == keyboard_state.buffer_index_max) ? keyboard_state.buffer_index_max : c+1;
-                framebuffer_set_cursor(r,c);
+                if(keyboard_state.buffer_index < keyboard_state.buffer_index_max){
+                    keyboard_state.buffer_index++;
+                    if(c == 79){
+                        framebuffer_set_cursor(r+1,0);
+                    }
+                    else{
+                        framebuffer_set_cursor(r,c+1);
+                    }
+                }
             }
         }
         else if(mapped_char != 0){
