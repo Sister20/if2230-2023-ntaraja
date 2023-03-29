@@ -3,6 +3,8 @@
 #include "lib-header/framebuffer.h"
 #include "lib-header/stdmem.h"
 
+// IF THERE IS ANYTHING THAT IS IMPLEMENTED AND NEED TO BE CHANGED IN THE FUTURE, YOU CAN PUT IT IN THE FEEDBACK AND IN MILESTONE 3 IT WILL BE CHANGED/IMPLEMENTED
+
 const char keyboard_scancode_1_to_ascii_map[256] = {
       0, 0x1B, '1', '2', '3', '4', '5', '6',  '7', '8', '9',  '0',  '-', '=', '\b', '\t',
     'q',  'w', 'e', 'r', 't', 'y', 'u', 'i',  'o', 'p', '[',  ']', '\n',   0,  'a',  's',
@@ -25,6 +27,9 @@ const char keyboard_scancode_1_to_ascii_map[256] = {
 
 struct KeyboardDriverState keyboard_state;
 
+/**
+ * @brief      Clear the keyboard buffer
+*/
 void keyboard_clear_buffer(void){
     keyboard_state.buffer_index = 0;
     memset(keyboard_state.keyboard_buffer, 0, KEYBOARD_BUFFER_SIZE);
@@ -57,7 +62,7 @@ void keyboard_insert(char ch){
 }
 
 /**
- * 
+ * @brief     Delete a character from the keyboard buffer at the current cursor position
 */
 void keyboard_delete(void){
     // no need to delete if buffer is empty
