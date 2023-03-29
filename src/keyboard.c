@@ -34,6 +34,7 @@ void keyboard_clear_buffer(void){
  * @brief      Write a character to the keyboard buffer at the current cursor position
 */
 void keyboard_insert(char ch){
+    // no more space in buffer, no replacement (idk if needed, if needed just give feedback and in milestone 3 will be implemented)
     if(keyboard_state.buffer_index_max == KEYBOARD_BUFFER_SIZE - 1){
         return;
     }
