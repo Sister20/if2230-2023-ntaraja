@@ -1,5 +1,6 @@
 #include "lib-header/interrupt/interrupt.h"
 #include "lib-header/portio.h"
+#include "lib-header/keyboard.h"
 
 void activate_keyboard_interrupt(void)
 {
@@ -55,5 +56,7 @@ void main_interrupt_handler(
     __attribute__((unused)) struct InterruptStack info
 ) {
     switch (int_number) {
+        case IRQ_KEYBOARD + PIC1:
+            keyboard_isr();break;
     }
 }
