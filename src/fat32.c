@@ -94,7 +94,6 @@ void create_fat32(void) {
     write_clusters(&dir_table, ROOT_CLUSTER_NUMBER, 1);
 }
 
-// TODO: Finish
 void initialize_filesystem_fat32(void) {
     if (is_empty_storage()) {
         create_fat32();
