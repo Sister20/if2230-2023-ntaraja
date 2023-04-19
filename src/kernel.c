@@ -14,7 +14,7 @@ void debugPrint(uint8_t row, uint8_t col, int32_t x) {
     framebuffer_write(row, col, x + '0', 0x0F, 0x00);
 }
 
-void kernel_setup(void) {
+_Noreturn void kernel_setup(void) {
     enter_protected_mode(&_gdt_gdtr);
     pic_remap();
     activate_keyboard_interrupt();
@@ -61,12 +61,6 @@ void kernel_setup(void) {
     request.buffer_size = 5*CLUSTER_SIZE;
     read(request);   // Success read on file "daijoubu"
 //    debugPrint(13, 3, read(request));   // Success read on file "daijoubu"
-
-//    framebuffer_write(6, 3, 'F', 0x0F, 0x00);
-//    framebuffer_write(6, 4, 'A', 0x0F, 0x00);
-//    framebuffer_write(6, 5, 'T', 0x0F, 0x00);
-//    framebuffer_write(6, 6, '3', 0x0F, 0x00);
-//    framebuffer_write(6, 7, '2', 0x0F, 0x00);
     while (TRUE);
 }
 

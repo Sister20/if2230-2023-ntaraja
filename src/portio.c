@@ -32,7 +32,7 @@ uint8_t in(uint16_t port) {
     return result;
 }
 
-uint8_t in16(uint16_t port) {
+uint16_t in16(uint16_t port) {
     uint16_t result;
     __asm__ volatile(
         "inw %1, %0"
