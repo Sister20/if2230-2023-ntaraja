@@ -29,6 +29,7 @@ disk:
 clean_disk:
 	@rm -rf $(OUTPUT_FOLDER)/disk.img
 
+# TODO: Add external inserter
 inserter:
 	@$(CC) -Wno-builtin-declaration-mismatch -g \
 		$(SOURCE_FOLDER)/stdmem.c $(SOURCE_FOLDER)/fat32.c \
