@@ -16,7 +16,7 @@
 ## Milestone 2
 - [x] Interrupt
 - [x] Keyboard Device Driver
-- [ ] Filesystem
+- [x] Filesystem
 
 ## Author
 | Name         | NIM            | Github |
