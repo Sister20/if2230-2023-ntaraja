@@ -22,6 +22,9 @@ _Noreturn void kernel_setup(void) {
     framebuffer_clear();
     framebuffer_set_cursor(0, 0);
     initialize_filesystem_fat32();
+    gdt_install_tss();
+    set_tss_register();
+
     keyboard_state_activate();
     // __asm__("int $0x4");
     struct ClusterBuffer cbuf[5];
@@ -36,31 +39,10 @@ _Noreturn void kernel_setup(void) {
             .parent_cluster_number = ROOT_CLUSTER_NUMBER,
             .buffer_size           = 0,
     };
-//    debugPrint(8, 3, write(request));
-    write(request);
-    memcpy(request.name, "kano1\0\0\0", 8);
-    write(request);
-//    debugPrint(9, 3, write(request));
+    read(request);
 
-    memcpy(request.name, "ikanaide", 8);
-    memcpy(request.ext, "\0\0\0", 3);
-    delete(request); // Delete first folder, thus creating hole in FS
-//    debugPrint(10, 3, delete(request));
-
-    memcpy(request.name, "daijoubu", 8);
-    request.buffer_size = 5*CLUSTER_SIZE;
-    write(request); // Create fragmented file "daijoubu"
-//    debugPrint(11, 3, write(request));
-    struct ClusterBuffer readcbuf;
-    read_clusters(&readcbuf, ROOT_CLUSTER_NUMBER+3 /* changed from 1 because delete is broken */, 1);
-//     If read properly, readcbuf should filled with 'a'
-
-    request.buffer_size = CLUSTER_SIZE;
-//    debugPrint(12, 3, read(request));
-    read(request);   // Failed read due not enough buffer size
-    request.buffer_size = 5*CLUSTER_SIZE;
-    read(request);   // Success read on file "daijoubu"
-//    debugPrint(13, 3, read(request));   // Success read on file "daijoubu"
+    set_tss_kernel_current_stack();
+    kernel_execute_user_program((uint8_t *) 0);
     while (TRUE);
 }
 

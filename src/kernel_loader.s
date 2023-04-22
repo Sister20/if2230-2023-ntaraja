@@ -57,3 +57,24 @@ set_tss_register:
     mov  eax, 0x28 | 0
     ltr  ax
     ret
+
+global kernel_execute_user_program
+kernel_execute_user_program:
+    mov eax, 0x20 | 0x3
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    mov ecx, [esp+4]
+    push eas
+    mov eax, ecx
+    add eax, 0x400000 - 4
+    push eax
+    pushf
+    mov eax, 0x18 | 0x3
+    push eax
+    mov eax, ecx
+    push eax
+
+    iret

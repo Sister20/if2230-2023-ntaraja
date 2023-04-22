@@ -141,6 +141,8 @@ void pic_ack(uint8_t irq);
 // Shift PIC interrupt number to PIC1_OFFSET and PIC2_OFFSET (master and slave)
 void pic_remap(void);
 
+void set_tss_kernel_current_stack(void);
+
 /**
  * Main interrupt handler when any interrupt / exception is raised.
  * Do not call this function normally.
