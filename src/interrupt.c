@@ -49,6 +49,15 @@ void pic_remap(void) {
     out(PIC2_DATA, a2);
 }
 
+void set_tss_kernel_current_stack(void) {
+    uint32_t stack;
+    __asm__ __volatile__ (
+        "mov %%esp, %0"
+        : "=r" (stack)
+    );
+    _interrupt_tss_entry.esp0 = stack + 8;
+}
+
 
 void main_interrupt_handler(
     __attribute__((unused)) struct CPURegister cpu,
