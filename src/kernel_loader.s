@@ -23,7 +23,7 @@ align 4                                 ; the code must be 4 byte aligned
     dd CHECKSUM                         ; and the checksum
 
 
-section .text                                  ; the code section
+section .setup.text                                  ; the code section
 loader equ (loader_entrypoint - KERNEL_VIRTUAL_BASE)
 loader_entrypoint:
     mov eax, _paging_kernel_page_directory - KERNEL_VIRTUAL_BASE
@@ -48,20 +48,16 @@ loader_virtual:
 .loop:
     jmp .loop                                  ; loop forever
 
-
-; More details: https://en.wikibooks.org/wiki/X86_Assembly/Protected_Mode
+section .text
 enter_protected_mode:
     cli
     mov  eax, [esp+4]
     lgdt [eax]
-    ;       eax at this line will carry GDTR location, dont forget to use square bracket [eax]
 
     mov  eax, cr0
     or al, 1
     mov  cr0, eax
 
-    ; Far jump to update cs register
-    ; Warning: Invalid GDT will raise exception in any instruction below
     jmp 0x8:flush_cs
 
 flush_cs:

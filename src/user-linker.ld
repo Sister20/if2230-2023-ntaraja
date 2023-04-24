@@ -17,7 +17,7 @@ SECTIONS {
 
     .rodata ALIGN(4):
     {
-        *(.rodata)
+        *(.rodata*)
     }
 
     _linker_user_program_end = .;

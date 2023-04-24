@@ -17,7 +17,7 @@ AFLAGS        = -f elf32 -g -F dwarf
 LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
 
-run: clean rebuild_disk all
+run: clean all
 	@qemu-system-i386 -s -S -drive format=raw,file=$(OUTPUT_FOLDER)/disk.img,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
 all: build
 build: iso
@@ -29,10 +29,11 @@ disk:
 clean_disk:
 	@rm -rf $(OUTPUT_FOLDER)/disk.img
 
-# TODO: Add external inserter
+rebuild-insert: rebuild_disk inserter insert-shell
+
 inserter:
 	@$(CC) -Wno-builtin-declaration-mismatch -g \
-		$(SOURCE_FOLDER)/stdmem.c $(SOURCE_FOLDER)/fat32.c \
+		$(SOURCE_FOLDER)/stdmem.c $(SOURCE_FOLDER)/fat32-no-cmos.c \
 		$(SOURCE_FOLDER)/external-inserter.c \
 		-o $(OUTPUT_FOLDER)/inserter
 
@@ -45,10 +46,9 @@ user-shell:
 	@size --target=binary bin/shell
 	@rm -f *.o
 
-# TODO: Finish make job
 insert-shell: inserter user-shell
 	@echo Inserting shell into root directory...
-	@cd $(OUTPUT_FOLDER); ./inserter shell 2 $(DISK_NAME).bin
+	@cd $(OUTPUT_FOLDER); ./inserter shell 2 disk.img
 
 
 kernel:
@@ -65,17 +65,17 @@ kernel:
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/paging.c -o $(OUTPUT_FOLDER)/paging.o
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel_loader.s -o $(OUTPUT_FOLDER)/kernel_loader.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
-# TODO: Compile C file with CFLAGS
+
 	@$(LIN) $(LFLAGS) bin/*.o -o $(OUTPUT_FOLDER)/kernel
 	@echo Linking object files and generate elf32...
-	@rm -f *.o
+	@rm -f bin/*.o
 
 iso: kernel
 	@mkdir -p $(OUTPUT_FOLDER)/iso/boot/grub
 	@cp $(OUTPUT_FOLDER)/kernel     $(OUTPUT_FOLDER)/iso/boot/
 	@cp other/grub1                 $(OUTPUT_FOLDER)/iso/boot/grub/
 	@cp $(SOURCE_FOLDER)/menu.lst   $(OUTPUT_FOLDER)/iso/boot/grub/
-# TODO: Create ISO image
+
 	@genisoimage -R -b boot/grub/grub1 -no-emul-boot -boot-load-size 4 -A os -input-charset utf8 -quiet -boot-info-table -o $(OUTPUT_FOLDER)/os2023.iso $(OUTPUT_FOLDER)/iso
 
 	@rm -r $(OUTPUT_FOLDER)/iso/

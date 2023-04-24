@@ -1,7 +1,7 @@
 #ifndef _PAGING_H
 #define _PAGING_H
 
-#include "lib-header/stdtype.h"
+#include "stdtype.h"
 
 #define PAGE_ENTRY_COUNT 1024
 #define PAGE_FRAME_SIZE  (4*1024*1024)
@@ -27,7 +27,6 @@ struct PageDirectoryEntryFlag {
     uint8_t access : 1;
     uint8_t dirty : 1;
     uint8_t use_pagesize_4_mb : 1;
-    // TODO : Continue. Note: Only first 8 bit flags
 } __attribute__((packed));
 
 /**
@@ -49,7 +48,6 @@ struct PageDirectoryEntry {
     uint16_t higher_address : 8;
     uint16_t reserved : 1;
     uint16_t lower_address : 10;
-    // TODO : Continue, Use uint16_t + bitfield here, Do not use uint8_t
 } __attribute__((packed));
 
 /**
@@ -63,7 +61,6 @@ struct PageDirectoryEntry {
  */
 struct PageDirectory {
     struct PageDirectoryEntry table[PAGE_ENTRY_COUNT];
-    // TODO : Implement
 } __attribute__((packed));
 
 /**

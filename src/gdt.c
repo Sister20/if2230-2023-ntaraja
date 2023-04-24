@@ -1,8 +1,7 @@
 #include "lib-header/interrupt/interrupt.h"
-#include "lib-header/stdtype.h"
 #include "lib-header/gdt.h"
 
-struct GlobalDescriptorTable global_descriptor_table = {
+static struct GlobalDescriptorTable global_descriptor_table = {
         .table = {
                 [0] = { // Null descriptor
                         .segment_low = 0x0000,
@@ -84,12 +83,12 @@ struct GlobalDescriptorTable global_descriptor_table = {
                         .granularity = 0x1,
                         .base_high = 0x00
                 },
-                [5] = {
+                [5] = { // TSS descriptor
                         .segment_low = sizeof(struct TSSEntry),
                         .base_low = 0x0000,
 
                         .base_mid = 0x00,
-                        .type_bit = 0x9,
+                        .type_bit = 0x9, // 0b1001
                         .non_system = 0x0,
                         .descriptor_privilege_level = 0x0,
                         .present = 0x1,
@@ -99,7 +98,7 @@ struct GlobalDescriptorTable global_descriptor_table = {
                         .default_operation_size = 0x0,
                         .granularity = 0x0,
                         .base_high = 0x00
-                }
+                }, {0}
         }
 };
 
@@ -112,5 +111,5 @@ void gdt_install_tss(void) {
     uint32_t base = (uint32_t) &_interrupt_tss_entry;
     global_descriptor_table.table[5].base_high = (base & (0xFF << 24)) >> 24;
     global_descriptor_table.table[5].base_mid = (base & (0xFF << 16)) >> 16;
-    global_descriptor_table.table[5].base_low = base & 0xFFFF;
+    global_descriptor_table.table[5].base_low = base;
 }

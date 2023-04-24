@@ -251,7 +251,7 @@ int8_t write(struct FAT32DriverRequest request) {
         } while (TRUE);
     }
     // File
-    uint32_t buffer_size = request.buffer_size;
+    int32_t buffer_size = request.buffer_size;
     uint32_t non_reserved_cluster = 3;
     uint32_t cluster = 0;
 

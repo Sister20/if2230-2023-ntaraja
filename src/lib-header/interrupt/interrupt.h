@@ -3,6 +3,8 @@
 
 #include "../stdtype.h"
 
+#define PAGE_FAULT 0xE
+
 /* -- PIC constants -- */
 
 // PIC interrupt offset
