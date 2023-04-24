@@ -43,7 +43,7 @@ loader_entrypoint:
 loader_virtual:
     mov dword [_paging_kernel_page_directory], 0
     invlpg [0]
-    mov esp, kernel_stack + KERNEL_STCK_SIZE
+    mov esp, kernel_stack + KERNEL_STACK_SIZE
     call kernel_setup
 .loop:
     jmp .loop                                  ; loop forever
@@ -86,7 +86,7 @@ kernel_execute_user_program:
     mov gs, ax
 
     mov ecx, [esp+4]
-    push eas
+    push eax
     mov eax, ecx
     add eax, 0x400000 - 4
     push eax
