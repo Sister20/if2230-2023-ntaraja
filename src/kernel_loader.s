@@ -1,7 +1,8 @@
 global loader                           ; the entry symbol for ELF
 global enter_protected_mode             ; go to protected mode
 global set_tss_register                 ; set the TSS register to GDT entry
-extern kernel_setup                     ; kernel
+extern kernel_setup                     ; kernel C entrypoint
+extern _paging_kernel_page_directory    ; kernel page directory
 
 KERNEL_VIRTUAL_BASE equ 0xC0000000      ; kernel virtual base address
 KERNEL_STACK_SIZE   equ 2097152         ; size of stack in bytes
@@ -23,8 +24,26 @@ align 4                                 ; the code must be 4 byte aligned
 
 
 section .text                                  ; the code section
-loader:                                        ; the loader label (defined as entry point in linker script)
-    mov  esp, kernel_stack + KERNEL_STACK_SIZE ; setup stack register to proper location
+loader equ (loader_entrypoint - KERNEL_VIRTUAL_BASE)
+loader_entrypoint:
+    mov eax, _paging_kernel_page_directory - KERNEL_VIRTUAL_BASE
+    mov cr3, eax
+
+    mov eax, cr4
+    or eax, 0x00000010
+    mov cr4, eax
+
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
+
+    lea eax, [loader_virtual]
+    jmp eax
+
+loader_virtual:
+    mov dword [_paging_kernel_page_directory], 0
+    invlpg [0]
+    mov esp, kernel_stack + KERNEL_STCK_SIZE
     call kernel_setup
 .loop:
     jmp .loop                                  ; loop forever
