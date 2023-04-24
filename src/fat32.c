@@ -257,20 +257,25 @@ int8_t write(struct FAT32DriverRequest request) {
 
     do {
         if (non_reserved_cluster == CLUSTER_MAP_SIZE) {
-            return -1; // No empty clusters
+            return -1;
         }
 
         if (fat_table->cluster_map[non_reserved_cluster] == FAT32_FAT_EMPTY_ENTRY) {
             if (cluster > 2) {
                 fat_table->cluster_map[cluster] = non_reserved_cluster;
+                fat_table->cluster_map[non_reserved_cluster] = FAT32_FAT_END_OF_FILE;
             } else {
                 struct FAT32DirectoryEntry dir_entry;
                 init_directory_entry(&dir_entry, request.name, request.parent_cluster_number);
                 dir_entry.attribute = ATTR_ARCHIVE;
                 memcpy(&dir_table->table[empty_entry], &dir_entry, sizeof(struct FAT32DirectoryEntry));
-                flush(non_reserved_cluster);
+
+                fat_table->cluster_map[non_reserved_cluster] = non_reserved_cluster + 1;
+                fat_table->cluster_map[non_reserved_cluster + 1] = FAT32_FAT_END_OF_FILE;
+
+                flush(request.parent_cluster_number);
             }
-            fat_table->cluster_map[non_reserved_cluster] = FAT32_FAT_END_OF_FILE;
+
             write_clusters((struct ClusterBuffer *) (request.buf)++, non_reserved_cluster, 1);
 
             buffer_size -= CLUSTER_SIZE;
@@ -280,12 +285,7 @@ int8_t write(struct FAT32DriverRequest request) {
 
     } while (buffer_size > 0);
 
-    if (non_reserved_cluster) {
-        write_clusters(&driver.fat_table, FAT_CLUSTER_NUMBER, 1);
-        return 0;
-    }
-
-    return -1;
+    return 0;
 }
 
 int8_t delete(struct FAT32DriverRequest request) {
