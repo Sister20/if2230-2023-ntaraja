@@ -22,16 +22,14 @@ void framebuffer_get_cursor(uint8_t *r, uint8_t *c) {
     *c = pos % 80;
 }
 
-void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) {
-    // TODO : Implement    
+void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) { 
     uint8_t attrib = (bg << 4) | (fg&0x0F);
-    volatile uint16_t * where = (volatile uint16_t *)0xB8000 + (row*80 + col);
+    volatile uint16_t * where = MEMORY_FRAMEBUFFER + (row*80 + col);
     memset((void*)where, c, 1);
     memset((void*)where+1, attrib, 1);
 }
 
 void framebuffer_clear(void) {
-    // TODO : Implement
     volatile uint8_t * where = MEMORY_FRAMEBUFFER;
     for(int i = 0 ; i < 25*80*2 ; i+=2){
         memset((void*)where+i, 0x00, 1);
