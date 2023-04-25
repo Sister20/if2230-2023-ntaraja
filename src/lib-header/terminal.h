@@ -12,6 +12,6 @@ extern uint8_t background_color;
 void init_terminal(void);
 void terminal_setBackgroundColor(uint8_t color);
 void putch(char c);
-void puts(const char* data);
+void puts(char *str, uint32_t len, uint32_t color);
 
 #endif
