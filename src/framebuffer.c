@@ -32,7 +32,7 @@ void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
 
 void framebuffer_clear(void) {
     // TODO : Implement
-    volatile uint8_t * where = (volatile uint8_t *)0xB8000;
+    volatile uint8_t * where = MEMORY_FRAMEBUFFER;
     for(int i = 0 ; i < 25*80*2 ; i+=2){
         memset((void*)where+i, 0x00, 1);
         memset((void*)where+i+1, 0x07, 1);
