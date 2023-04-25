@@ -1,6 +1,13 @@
 #include "lib-header/interrupt/interrupt.h"
 #include "lib-header/portio.h"
 #include "lib-header/keyboard.h"
+#include "lib-header/interrupt/idt.h"
+#include "lib-header/filesystem/fat32.h"
+#include "lib-header/stdmem.h"
+
+struct TSSEntry _interrupt_tss_entry = {
+    .ss0 = GDT_KERNEL_DATA_SEGMENT_SELECTOR,
+};
 
 void activate_keyboard_interrupt(void)
 {
@@ -49,6 +56,32 @@ void pic_remap(void) {
     out(PIC2_DATA, a2);
 }
 
+void set_tss_kernel_current_stack(void) {
+    uint32_t pStack;
+    __asm__ __volatile__ (
+        "mov %%esp, %0"
+        : "=r" (pStack)
+    );
+    _interrupt_tss_entry.esp0 = pStack + 8;
+}
+
+void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptStack info) {
+    if (cpu.eax == 0) {
+        struct FAT32DriverRequest request = *(struct FAT32DriverRequest *) cpu.ebx;
+        *((int8_t *) cpu.ecx) = read(request);
+    } else if (cpu.eax == 4) {
+        keyboard_state_activate();
+        __asm__("sti");
+        while (is_keyboard_blocking());
+        char buf[KEYBOARD_BUFFER_SIZE];
+        get_keyboard_buffer(buf);
+        memcpy((char *) cpu.ebx, buf, cpu.ecx);
+    } else if (cpu.eax == 5) {
+        // TODO: Implement puts()
+//        puts((char *) cpu.ebx);
+    }
+}
+
 
 void main_interrupt_handler(
     __attribute__((unused)) struct CPURegister cpu,
@@ -57,6 +90,13 @@ void main_interrupt_handler(
 ) {
     switch (int_number) {
         case IRQ_KEYBOARD + PIC1:
-            keyboard_isr();break;
+            keyboard_isr();
+            break;
+        case PAGE_FAULT:
+            __asm__("hlt");
+            break;
+        case 0x30:
+            syscall(cpu, info);
+            break;
     }
 }

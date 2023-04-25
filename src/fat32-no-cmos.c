@@ -3,6 +3,8 @@
 #include "lib-header/filesystem/fat32.h"
 #include "lib-header/portio.h"
 
+#include <time.h>
+
 const uint8_t fs_signature[BLOCK_SIZE] = {
         'C', 'o', 'u', 'r', 's', 'e', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
         'D', 'e', 's', 'i', 'g', 'n', 'e', 'd', ' ', 'b', 'y', ' ', ' ', ' ', ' ', ' ',
@@ -20,25 +22,15 @@ static bool cluster_dir_map[CLUSTER_MAP_SIZE] = {
         [3 ... CLUSTER_MAP_SIZE - 1] = FALSE
 };
 
-// Temporary interrupt handling
-int rtc_updating() {
-    out(0x70, 0x0A);
-    return in(0x71) & 0x80;
-}
-
-uint8_t get_rtc_register(uint8_t reg) {
-    out(0x70, reg);
-    return in(0x71);
-}
-
-void init_rtc(struct DateTime *dateTime) {
-    while (rtc_updating());
-    dateTime->second = get_rtc_register(0x00);
-    dateTime->minute = get_rtc_register(0x02);
-    dateTime->hour = get_rtc_register(0x04);
-    dateTime->day = get_rtc_register(0x07);
-    dateTime->month = get_rtc_register(0x08);
-    dateTime->year = get_rtc_register(0x09);
+void get_date_time(struct DateTime *dateTime) {
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+    dateTime->year = tm->tm_year;
+    dateTime->month = tm->tm_mon + 1;
+    dateTime->day = tm->tm_mday;
+    dateTime->hour = tm->tm_hour;
+    dateTime->minute = tm->tm_min;
+    dateTime->second = tm->tm_sec;
 }
 
 inline uint32_t cluster_to_lba(uint32_t cluster) {
@@ -52,7 +44,7 @@ void flush(uint32_t dir_cluster) {
 
 void init_directory_entry(struct FAT32DirectoryEntry *dir_entry, char *name, uint32_t parent_dir_cluster) {
     struct DateTime dateTime;
-    init_rtc(&dateTime);
+    get_date_time(&dateTime);
     memcpy(dir_entry->name, name, 8);
     memcpy(dir_entry->ext, "\0\0\0", 3);
     dir_entry->attribute = ATTR_SUBDIRECTORY;
