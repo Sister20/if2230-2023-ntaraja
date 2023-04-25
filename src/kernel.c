@@ -22,7 +22,7 @@ _Noreturn void kernel_setup(void) {
     set_tss_register();
 
     allocate_single_user_page_frame((uint8_t *) 0);
-
+    
     keyboard_state_activate();
     struct FAT32DriverRequest request = {
             .buf                   = (uint8_t *) 0,
@@ -34,8 +34,7 @@ _Noreturn void kernel_setup(void) {
     read(request);
 
     set_tss_kernel_current_stack();
-    framebuffer_write(2, 3, 'A', 0x0F, 0x00);
-//    kernel_execute_user_program((uint8_t *) 0); Bugged
+    kernel_execute_user_program((uint8_t *) 0);
 
     while (TRUE);
 }

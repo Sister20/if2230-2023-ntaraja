@@ -16,13 +16,13 @@ struct FAT32DriverRequest {
     uint32_t  buffer_size;
 } __attribute__((packed));
 
-void*  memcpy(void* restrict dest, const void* restrict src, size_t n);
+extern void*  memcpy(void* restrict dest, const void* restrict src, size_t n);
 
-void   initialize_filesystem_fat32(void);
-int8_t read(struct FAT32DriverRequest request);
-int8_t read_directory(struct FAT32DriverRequest request);
-int8_t write(struct FAT32DriverRequest request);
-int8_t delete(struct FAT32DriverRequest request);
+extern void   initialize_filesystem_fat32(void);
+extern int8_t read(struct FAT32DriverRequest request);
+extern int8_t read_directory(struct FAT32DriverRequest request);
+extern int8_t write(struct FAT32DriverRequest request);
+extern int8_t delete(struct FAT32DriverRequest request);
 
 
 
@@ -72,12 +72,17 @@ int main(int argc, char *argv[]) {
 
     // FAT32 operations
     initialize_filesystem_fat32();
+
+    uint32_t cluster;
+    sscanf(argv[2], "%u",  &cluster);
+
     struct FAT32DriverRequest request = {
             .buf         = file_buffer,
             .ext         = "\0\0\0",
             .buffer_size = filesize,
+            .parent_cluster_number = cluster
     };
-    sscanf(argv[2], "%u",  &request.parent_cluster_number);
+
     sscanf(argv[1], "%8s", request.name);
     int retcode = write(request);
     if (retcode == 0)
