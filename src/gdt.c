@@ -95,7 +95,7 @@ static struct GlobalDescriptorTable global_descriptor_table = {
                         .segment_high = (sizeof(struct TSSEntry) & (0xF << 16)) >> 16,
                         .available = 0x0,
                         .long_mode = 0x0,
-                        .default_operation_size = 0x0,
+                        .default_operation_size = 0x1,
                         .granularity = 0x0,
                         .base_high = 0x00
                 }, {0}

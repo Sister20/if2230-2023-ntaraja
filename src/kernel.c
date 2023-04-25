@@ -34,7 +34,8 @@ _Noreturn void kernel_setup(void) {
     read(request);
 
     set_tss_kernel_current_stack();
-    kernel_execute_user_program((uint8_t *) 0);
+    framebuffer_write(2, 3, 'A', 0x0F, 0x00);
+//    kernel_execute_user_program((uint8_t *) 0); Bugged
 
     while (TRUE);
 }
