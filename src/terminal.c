@@ -21,24 +21,27 @@ void terminal_setBackgroundColor(uint8_t color) {
     background_color = color;
 }
 
-void putch(char c) {
-    if (c == '\n') {
-        row++;
-        column = 0;
-    } else {
-        framebuffer_write(row, column, c, (uint8_t)background_color, (uint8_t)background_color);
+// void putch(char c) {
+//     if (c == '\n') {
+//         row++;
+//         column = 0;
+//     } else {
+//         framebuffer_write(row, column, c, (uint8_t)background_color, (uint8_t)background_color);
+//         if (++column == VGA_WIDTH) {
+//             column = 0;
+//             if (++row == VGA_HEIGHT)
+//                 row = 0;
+//         }
+//     }
+// }
+
+void puts(const char* data, uint32_t len, uint32_t color) {
+    for (size_t i = 0; i < len; i++) {
+        framebuffer_write(row, column, data[i], (uint8_t)color, (uint8_t)background_color);
         if (++column == VGA_WIDTH) {
             column = 0;
             if (++row == VGA_HEIGHT)
                 row = 0;
         }
-    }
-}
-
-void puts(const char* data) {
-    int i = 0;
-    while(data[i] != '\0'){
-        i++;
-        putch(data[i]);
     }
 }
