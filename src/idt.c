@@ -30,7 +30,7 @@ void set_interrupt_gate(uint8_t int_vector, void *handler_address, uint16_t gdt_
     // TODO : Set handler offset, privilege & segment
     idt_int_gate->offset_low = ((unsigned long)handler_address & 0xFFFF);
     idt_int_gate->offset_high = ((unsigned long)handler_address >> 16) & 0xFFFF;
-    idt_int_gate->privilege = privilege && 0b11;
+    idt_int_gate->privilege = privilege & 0b11;
     idt_int_gate->segment = gdt_seg_selector;
 
     idt_int_gate->_reserved = 0b00000;
