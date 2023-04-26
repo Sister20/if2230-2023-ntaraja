@@ -209,12 +209,14 @@ int8_t read(struct FAT32DriverRequest request) {
     uint32_t cluster = (dir_table->table[index].cluster_high << 16) | dir_table->table[index].cluster_low;
 
     if (!cluster) {
-        return -1; // Unknown errors
+        return -1; // Unknown error
     }
 
+    uint32_t count = 0;
     do {
-        read_clusters(request.buf, cluster, 1);
+        read_clusters(request.buf + CLUSTER_SIZE * count, cluster, 1);
         cluster = driver.fat_table.cluster_map[cluster];
+        count++;
     } while (driver.fat_table.cluster_map[cluster] != FAT32_FAT_END_OF_FILE);
 
     return 0; // Success
