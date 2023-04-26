@@ -275,8 +275,13 @@ int8_t write(struct FAT32DriverRequest request) {
             } while (fat_table->cluster_map[head] != FAT32_FAT_EMPTY_ENTRY);
 
             fat_table->cluster_map[tail] = head;
-            fat_table->cluster_map[head] = FAT32_FAT_END_OF_FILE;
+            if (buffer_size == 0) {
+                fat_table->cluster_map[head] = FAT32_FAT_END_OF_FILE;
+            }
+        } else {
+            head++;
         }
+        tail = head;
     } while (buffer_size > 0);
 
     flush(request.parent_cluster_number);

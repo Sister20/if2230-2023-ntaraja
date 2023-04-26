@@ -49,10 +49,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Read storage into memory, requiring 4 MB memory
-    image_storage     = malloc(4*1024*1024);
-    file_buffer       = malloc(4*1024*1024);
+    image_storage     = malloc(16*1024*1024);
+    file_buffer       = malloc(16*1024*1024);
     FILE *fptr        = fopen(argv[3], "r");
-    fread(image_storage, 4*1024*1024, 1, fptr);
+    fread(image_storage, 16*1024*1024, 1, fptr);
     fclose(fptr);
 
     // Read target file, assuming file is less than 4 MiB
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
     if (fptr_target == NULL)
         filesize = 0;
     else {
-        fread(file_buffer, 4*1024*1024, 1, fptr_target);
+        fread(file_buffer, 16*1024*1024, 1, fptr_target);
         fseek(fptr_target, 0, SEEK_END);
         filesize = ftell(fptr_target);
         fclose(fptr_target);
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
 
     // Write image in memory into original, overwrite them
     fptr              = fopen(argv[3], "w");
-    fwrite(image_storage, 4*1024*1024, 1, fptr);
+    fwrite(image_storage, 16*1024*1024, 1, fptr);
     fclose(fptr);
 
     return 0;

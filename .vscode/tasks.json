@@ -45,6 +45,13 @@
             "type": "shell",
             "label": "Exit QEMU",
             "command": "pkill -f qemu || test $? -eq 1"
+        },
+        {
+            "type": "shell",
+            "label": "Prepare Insert",
+            "command": "make",
+            "args": ["rebuild-insert"],
+            "options": {"cwd": "${workspaceFolder}/bin"}
         }
     ],
 }

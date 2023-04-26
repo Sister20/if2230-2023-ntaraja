@@ -23,9 +23,8 @@ _Noreturn void kernel_setup(void) {
 
     allocate_single_user_page_frame((uint8_t *) 0);
     
-    keyboard_state_activate();
     struct FAT32DriverRequest request = {
-            .buf                   = (uint8_t *) 0,
+            .buf                   = (uint8_t *) 1,
             .name                  = "shell",
             .ext                   = "\0\0\0",
             .parent_cluster_number = ROOT_CLUSTER_NUMBER,
