@@ -91,7 +91,7 @@ void main_interrupt_handler(struct CPURegister cpu, uint32_t int_number, struct 
         case PAGE_FAULT:
             // __asm__("hlt");
             break;
-        case GENERAL_PROTECTION_FAULT: // Debugging purposes only. Until I figure out what causes interrupt to always equal 0xD.
+        case 0x30:
             syscall(cpu, info);
             break;
     }
