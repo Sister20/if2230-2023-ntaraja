@@ -85,8 +85,9 @@ void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count) {
 /*** -- CRUD -- ***/
 
 int32_t find_empty_entry(struct FAT32DirectoryTable *dir_table) {
+    char empty[8] = {0};
     for (int32_t i = 0; i < (int32_t) (CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
-        if (dir_table->table[i].name[0] == 0x00) {
+        if (memcmp(dir_table->table[i].name, empty, 8) == 0) {
             return i;
         }
     }

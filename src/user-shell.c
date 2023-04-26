@@ -1,5 +1,4 @@
 #include "lib-header/stdtype.h"
-#include "lib-header/filesystem/fat32.h"
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));

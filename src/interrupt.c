@@ -59,9 +59,10 @@ void pic_remap(void) {
 
 void set_tss_kernel_current_stack(void) {
     uint32_t pStack;
-    __asm__ __volatile__ (
-        "mov %%esp, %0"
+    __asm__ volatile (
+        "mov %%ebp, %0"
         : "=r" (pStack)
+        :
     );
     _interrupt_tss_entry.esp0 = pStack + 8;
 }
@@ -90,7 +91,7 @@ void main_interrupt_handler(struct CPURegister cpu, uint32_t int_number, struct 
         case PAGE_FAULT:
             // __asm__("hlt");
             break;
-        case 0x30:
+        case GENERAL_PROTECTION_FAULT: // Debugging purposes only. Until I figure out what causes interrupt to always equal 0xD.
             syscall(cpu, info);
             break;
     }
