@@ -263,7 +263,7 @@ int8_t write(struct FAT32DriverRequest request) {
         }
 
         if (fat_table->cluster_map[head] == FAT32_FAT_EMPTY_ENTRY) {
-            if (!(memcmp(&dir_table->table[empty_entry].name, request.name, 8) != 0 && memcmp(&dir_table->table[empty_entry].ext, request.ext, 3) != 0)) {
+            if ((memcmp(&dir_table->table[empty_entry].name, request.name, 8) != 0 && memcmp(&dir_table->table[empty_entry].ext, request.ext, 3) != 0)) {
                 struct FAT32DirectoryEntry dir_entry;
                 init_directory_entry(&dir_entry, request.name, head);
                 memcpy(&dir_table->table[empty_entry], &dir_entry, sizeof(struct FAT32DirectoryEntry));
