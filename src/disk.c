@@ -12,6 +12,7 @@ static void ATA_DRQ_wait() {
 void read_blocks(void *ptr, uint32_t logical_block_address, uint8_t block_count) {
     ATA_busy_wait();
     out(ATA_PRIMARY_DRIVE, 0xE0 | ((logical_block_address >> 24) & 0x0F));
+    out(ATA_PRIMARY_ERR, 0x00);
     out(ATA_PRIMARY_SECT_CNT, block_count);
     out(ATA_PRIMARY_LBA_LO, (uint8_t) logical_block_address);
     out(ATA_PRIMARY_LBA_MID, (uint8_t) (logical_block_address >> 8));

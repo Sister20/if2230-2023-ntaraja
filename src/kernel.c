@@ -47,6 +47,8 @@ _Noreturn void kernel_setup(void) {
     delete(ikanaide);
     write(ikanaide);
 
+    memcpy(ikanaide.name, "daijoubu", 8);
+    write(ikanaide);
 
     set_tss_kernel_current_stack();
     kernel_execute_user_program((uint8_t *) 0);

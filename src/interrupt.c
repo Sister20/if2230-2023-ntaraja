@@ -89,7 +89,7 @@ void main_interrupt_handler(struct CPURegister cpu, uint32_t int_number, struct 
             keyboard_isr();
             break;
         case PAGE_FAULT:
-            // __asm__("hlt");
+            __asm__("hlt");
             break;
         case 0x30:
             syscall(cpu, info);

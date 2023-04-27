@@ -6,7 +6,7 @@
             "label": "Build OS",
             "command": "make",
             "args": [
-                "build",
+                "all",
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -51,7 +51,7 @@
             "label": "Prepare Insert",
             "command": "make",
             "args": ["rebuild-insert"],
-            "options": {"cwd": "${workspaceFolder}/bin"}
+            "options": {"cwd": "${workspaceFolder}"}
         }
     ],
 }
