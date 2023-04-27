@@ -25,6 +25,18 @@ void framebuffer_get_cursor(uint8_t *r, uint8_t *c) {
 void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) { 
     uint8_t attrib = (bg << 4) | (fg&0x0F);
     volatile uint16_t * where = (uint16_t *) MEMORY_FRAMEBUFFER + (row*80 + col);
+
+    // if in the last row, scroll
+    if (row == 25) {
+        for (int i = 0; i < 80*24; i++) {
+            *(where+i) = *(where+i+80);
+        }
+        for (int i = 0; i < 80; i++) {
+            *(where+80*24+i) = 0x0700;
+        }
+        return;
+    }
+
     // change if c is \n
     if (c == '\n') {
         framebuffer_set_cursor(row+1, 0);
