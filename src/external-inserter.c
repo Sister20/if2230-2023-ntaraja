@@ -49,15 +49,15 @@ int main(int argc, char *argv[]) {
     }
 
     // Read storage into memory, requiring 4 MB memory
-    image_storage     = malloc(16*1024*1024);
-    file_buffer       = malloc(16*1024*1024);
+    image_storage     = calloc(16*1024*1024, sizeof(uint8_t));
+    file_buffer       = calloc(16*1024*1024, sizeof(uint8_t));
     FILE *fptr        = fopen(argv[3], "r");
     fread(image_storage, 16*1024*1024, 1, fptr);
     fclose(fptr);
 
     // Read target file, assuming file is less than 4 MiB
     FILE *fptr_target = fopen(argv[1], "r");
-    size_t filesize   = 0;
+    size_t filesize;
     if (fptr_target == NULL)
         filesize = 0;
     else {

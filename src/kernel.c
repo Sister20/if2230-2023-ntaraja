@@ -44,6 +44,7 @@ _Noreturn void kernel_setup(void) {
             .parent_cluster_number = ROOT_CLUSTER_NUMBER,
             .buffer_size = CLUSTER_SIZE
     };
+    delete(ikanaide);
     write(ikanaide);
 
 

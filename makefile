@@ -19,7 +19,7 @@ LFLAGS        = -T $(SOURCE_FOLDER)/linker.ld -melf_i386
 
 run: clean all
 	@qemu-system-i386 -s -S -drive format=raw,file=$(OUTPUT_FOLDER)/disk.img,if=ide,index=0,media=disk -cdrom $(OUTPUT_FOLDER)/$(ISO_NAME).iso
-all: build
+all: clean build
 build: iso
 clean:
 	@rm -rf $(OUTPUT_FOLDER)/*.o $(OUTPUT_FOLDER)/*.iso $(OUTPUT_FOLDER)/kernel

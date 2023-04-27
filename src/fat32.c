@@ -112,11 +112,11 @@ void read_clusters(void *ptr, uint32_t cluster_number, uint8_t cluster_count) {
 }
 
 /*** -- CRUD -- ***/
+const char empty_name[8] = {0};
 
 int32_t find_empty_entry(struct FAT32DirectoryTable *dir_table) {
-    char empty[8] = {0};
     for (int32_t i = 0; i < (int32_t) (CLUSTER_SIZE / sizeof(struct FAT32DirectoryEntry)); i++) {
-        if (memcmp(dir_table->table[i].name, empty, 8) == 0) {
+        if (memcmp(dir_table->table[i].name, empty_name, 8) == 0) {
             return i;
         }
     }
@@ -153,7 +153,7 @@ void add_directory_entry(struct FAT32DriverRequest request, uint32_t cluster) {
 bool is_dir_cluster(uint32_t cluster) {
     for (uint32_t i = 2; i < CLUSTER_MAP_SIZE; i++) {
         if (cluster_dir_map[i]) {
-            read_clusters(&driver.dir_table_buf, i, 1);
+            read_clusters(&driver.dir_table_buf, i, 4);
             struct FAT32DirectoryTable *dir_table = &driver.dir_table_buf;
             uint32_t j = 0;
             struct FAT32DirectoryEntry *dir_entry = &dir_table->table[j];
@@ -170,7 +170,7 @@ bool is_dir_cluster(uint32_t cluster) {
 }
 
 int8_t read_directory(struct FAT32DriverRequest request) {
-    read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 1);
+    read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 4);
     struct FAT32DirectoryTable *dir_table = &driver.dir_table_buf;
 
     int32_t index = dir_table_search(request.name, request.ext);
@@ -190,7 +190,7 @@ int8_t read_directory(struct FAT32DriverRequest request) {
 }
 
 int8_t read(struct FAT32DriverRequest request) {
-    read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 1);
+    read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 4);
     struct FAT32DirectoryTable *dir_table = &driver.dir_table_buf;
     int32_t index = dir_table_search(request.name, request.ext);
 
@@ -212,19 +212,24 @@ int8_t read(struct FAT32DriverRequest request) {
         return -1; // Unknown error
     }
 
-//    uint32_t count = 0;
+    uint32_t count = 0;
     do {
-        read_clusters((struct ClusterBuffer *)(request.buf)++, cluster, 1);
+//        read_clusters((struct ClusterBuffer *)(request.buf)++, cluster, 1);
+        read_clusters(request.buf + (count * CLUSTER_SIZE), cluster, 4);
         cluster = driver.fat_table.cluster_map[cluster];
-//        count++;
+        count++;
     } while (driver.fat_table.cluster_map[cluster] != FAT32_FAT_END_OF_FILE);
 
     return 0; // Success
 }
 
 int8_t write(struct FAT32DriverRequest request) {
+    if (memcmp(request.name, empty_name, 8) == 0) {
+        return -1; // No name, invalid file
+    }
+
     struct FAT32FileAllocationTable *fat_table = &driver.fat_table;
-    read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 1);
+    read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 4);
     struct FAT32DirectoryTable *dir_table = &driver.dir_table_buf;
     uint32_t empty_entry = find_empty_entry(dir_table);
 
@@ -256,6 +261,7 @@ int8_t write(struct FAT32DriverRequest request) {
     uint32_t buffer_size = request.buffer_size;
     uint32_t head = 3; // 32 is the first cluster after the root directory + reserved clusters
     uint32_t tail = head;
+    uint32_t count = 0;
 
     do {
         if (head == CLUSTER_MAP_SIZE) {
@@ -263,13 +269,15 @@ int8_t write(struct FAT32DriverRequest request) {
         }
 
         if (fat_table->cluster_map[head] == FAT32_FAT_EMPTY_ENTRY) {
-            if (memcmp(&dir_table->table[empty_entry].name, &((struct FAT32DirectoryEntry) {0}), sizeof(struct FAT32DirectoryEntry)) == 0) {
+            if (memcmp(dir_table->table[empty_entry].name, empty_name, 8) == 0) {
                 struct FAT32DirectoryEntry dir_entry;
                 init_directory_entry(&dir_entry, request.name, head);
                 memcpy(&dir_table->table[empty_entry], &dir_entry, sizeof(struct FAT32DirectoryEntry));
             }
 
-            write_clusters((struct ClusterBuffer *)(request.buf)++, tail, 1);
+//            write_clusters((struct ClusterBuffer *)(request.buf)++, tail, 1);
+            write_clusters(request.buf + (count * CLUSTER_SIZE), tail, 1);
+            count++;
 
             buffer_size = buffer_size < CLUSTER_SIZE ? 0 : buffer_size - CLUSTER_SIZE;
 
@@ -294,12 +302,13 @@ int8_t write(struct FAT32DriverRequest request) {
 
 int8_t delete(struct FAT32DriverRequest request) {
     struct FAT32FileAllocationTable *fat_table = &driver.fat_table;
+    struct FAT32DirectoryTable *dir_table = &driver.dir_table_buf;
     for (uint32_t cluster = request.parent_cluster_number; cluster < CLUSTER_MAP_SIZE; cluster++) {
         // This will check every EOF which mark doubles as a directory
+        // (How the hell did I forget to check for files)
         if (fat_table->cluster_map[cluster] == FAT32_FAT_END_OF_FILE) {
             // Check if the directory is the one we are looking for
-            read_clusters(&driver.dir_table_buf, cluster, 1);
-            struct FAT32DirectoryTable *dir_table = &driver.dir_table_buf;
+            read_clusters(&driver.dir_table_buf, cluster, 4);
             for (int i = 0; i < 64; i++) {
                 if (memcmp(dir_table->table[i].name, request.name, 8) == 0) {
                     if (dir_table->table[i].user_attribute == UATTR_NOT_EMPTY) {
@@ -309,6 +318,25 @@ int8_t delete(struct FAT32DriverRequest request) {
                             (dir_table->table[i].cluster_high << 16) | dir_table->table[i].cluster_low;
                     fat_table->cluster_map[folder_cluster] = FAT32_FAT_EMPTY_ENTRY;
                     memset(&dir_table->table[i], 0, sizeof(struct FAT32DirectoryEntry));
+                    flush(cluster);
+                    return 0; // Success
+                }
+            }
+        } else if (fat_table->cluster_map[cluster] != FAT32_FAT_EMPTY_ENTRY) {
+            read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 4);
+            for (int i = 0; i < 64; i++) {
+                if (memcmp(dir_table->table[i].name, request.name, 8) == 0 && memcmp(dir_table->table[i].ext, request.ext, 3) == 0) {
+                    uint32_t file_cluster = (dir_table->table[i].cluster_high << 16) | dir_table->table[i].cluster_low;
+
+                    do {
+                        uint32_t next_cluster = fat_table->cluster_map[file_cluster];
+                        fat_table->cluster_map[file_cluster] = FAT32_FAT_EMPTY_ENTRY;
+                        file_cluster = next_cluster;
+                    } while (fat_table->cluster_map[file_cluster] != FAT32_FAT_END_OF_FILE);
+
+                    memset(&dir_table->table[i], 0, sizeof(struct FAT32DirectoryEntry));
+
+                    //  write_clusters(0, file_cluster, 1); File will be overwritten in the next write operation anyway
                     flush(cluster);
                     return 0; // Success
                 }
