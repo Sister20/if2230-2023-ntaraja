@@ -289,6 +289,7 @@ int8_t write(struct FAT32DriverRequest request) {
             if (memcmp(dir_table->table[empty_entry].name, empty_name, 8) == 0) {
                 struct FAT32DirectoryEntry dir_entry;
                 init_directory_entry(&dir_entry, request.name, head);
+                dir_entry.filesize = buffer_size;
                 memcpy(&dir_table->table[empty_entry], &dir_entry, sizeof(struct FAT32DirectoryEntry));
             }
 
