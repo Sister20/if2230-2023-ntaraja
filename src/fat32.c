@@ -219,7 +219,7 @@ int8_t read_directory(struct FAT32DriverRequest request) {
     }
 
     if (dir_table->table[index].attribute == ATTR_SUBDIRECTORY && dir_table->table[index].undelete != 0xE5) {
-        request.buf = &dir_table->table[index];
+        request.buf = &dir_table->table;
         return 0; // Success
     } else if (dir_table->table[index].attribute != ATTR_SUBDIRECTORY) {
         return 1; // Not a folder
