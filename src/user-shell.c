@@ -12,19 +12,20 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 }
 
 int main(void) {
-    // struct ClusterBuffer cl           = {0};
-    // struct FAT32DriverRequest request = {
-    //     .buf                   = &cl,
-    //     .name                  = "ikanaide",
-    //     .ext                   = "\0\0\0",
-    //     .parent_cluster_number = ROOT_CLUSTER_NUMBER,
-    //     .buffer_size           = CLUSTER_SIZE,
-    // };
-    // int32_t retcode;
-    // syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
-    // if (retcode == 0)
-    syscall(5, (uint32_t) "owo\n", 4, 0xF);
-
+    struct ClusterBuffer cl           = {0};
+    struct FAT32DriverRequest request = {
+            .buf                   = &cl,
+            .name                  = "ikanaide",
+            .ext                   = "\0\0\0",
+            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size           = CLUSTER_SIZE,
+    };
+    int32_t retcode;
+    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
+    if (retcode == 0){
+        syscall(5, (uint32_t) "owo\n", 4, 0xF);
+        syscall(5, (uint32_t) cl.buf, 10, 0xf);
+    }
     char buf[16];
     while (TRUE) {
         syscall(4, (uint32_t) buf, 16, 0);

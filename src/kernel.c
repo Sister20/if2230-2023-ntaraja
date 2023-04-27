@@ -32,6 +32,21 @@ _Noreturn void kernel_setup(void) {
     };
     read(request);
 
+    struct ClusterBuffer cbuf[1];
+    for (int i = 0; i < CLUSTER_SIZE; i++) {
+        cbuf[0].buf[i] = i + 'a';
+    }
+
+    struct FAT32DriverRequest ikanaide = {
+            .buf = cbuf,
+            .name = "ikanaide",
+            .ext = "\0\0\0",
+            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size = CLUSTER_SIZE
+    };
+    write(ikanaide);
+
+
     set_tss_kernel_current_stack();
     kernel_execute_user_program((uint8_t *) 0);
 
