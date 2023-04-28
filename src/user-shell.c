@@ -3,35 +3,8 @@
 
 static uint32_t currenDir = ROOT_CLUSTER_NUMBER;
 static struct FAT32DirectoryTable curTable;
-static char curDirName[300] = "";
-
-struct stack{
-    char* data[100];
-    int top;
-};
-
-void push(struct stack* s, char* data){
-    s->top++;
-    s->data[s->top] = data;
-}
-
-void pop(struct stack* s){
-    s->data[s->top] = "";
-    s->top--;
-}
-
-void getTop(struct stack s, char *x){
-    char* c = s.data[s.top];
-    int i = 0;
-    while(c[i]!='\0'){
-        x[i] = c[i];
-        i++;
-    }
-}
-
-void initiateStack(struct stack* s){
-    s->top = -1;
-}
+static char curDirName[300] = "/\0";
+static struct FAT32DirectoryTable rootTable;
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
@@ -78,7 +51,137 @@ bool strcmp(const char* str1, const char* str2, int n) {
     return i==n;
 }
 
+void splitPath(char* path, char* pre, char* post){
+    int i = 1;
+    // initialize pre and post
+    for (int i = 0 ; i < 300 ; i++){
+        pre[i] = '\0';
+        post[i] = '\0';
+    }
+    while(path[i]!='/' && path[i]!='\0'){
+        pre[i-1] = path[i];
+        i++;
+    }
+    pre[i] = '\0';
+    i++;
+    post[0] = '/';
+    int j = 1;
+    while(path[i]!='\0'){
+        post[j] = path[i];
+        i++;j++;
+    }
+}
+
+bool clusterExist(struct FAT32DirectoryTable table, uint32_t clusterNumber){
+    for (int i = 1 ; i < 64 ; i++){
+        if (clusterNumber == (uint32_t)(table.table[i].cluster_high << 16 | table.table[i].cluster_low)){
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 void cd(char* filename){
+    // check if ..
+    if (strcmp("..\0", filename, 2)){
+        if (currenDir == ROOT_CLUSTER_NUMBER){
+            syscall(5, (uint32_t) "Already at root directory\n", 27, 0xf);
+            return;
+        }
+        currenDir = (uint32_t)curTable.table[0].cluster_high << 16 | curTable.table[0].cluster_low; // target cluster number
+    
+        // start from root so curtable is set to root table
+        curTable = rootTable;
+
+        // iterate from root to parent
+        char temp[300] = "\0";
+        temp[0] = '/';
+        temp[1] = '\0';
+        int i = 0;
+        char pre[300] = "\0";
+        char post[300] = "\0";
+        // initialize post as curDirName
+        for (int i = 0 ; i < slen(curDirName); i++){
+            post[i] = curDirName[i];
+        }
+        while(!clusterExist(curTable, currenDir)){
+            // save current directory name
+            char tempChar[300] = "\0";
+            for (int j = 0 ; j < 300 ; j++){
+                tempChar[j] = '\0';
+            }
+            for (int j = 0 ; j < slen(post); j++){
+                tempChar[j] = post[j];
+            }
+            splitPath(tempChar, pre, post);
+            i = 0;
+            while(pre[i]!='\0'){
+                temp[i] = pre[i];
+                i++;
+            }
+            temp[i] = '/';
+
+            // split pre into name and ext
+            char name[9] = "\0\0\0\0\0\0\0\0\0";
+            char ext[4] = "\0\0\0\0";
+            readfname(pre, name, ext);
+            uint8_t retcode = 0;
+
+            // int temp_int = 1;
+            // while(!(strcmp(curTable.table[temp_int].name, name, slen(name)) && strcmp(curTable.table[temp_int].ext, ext, slen(ext)))){
+            //     temp_int++;
+            // }
+
+            struct FAT32DriverRequest tempRequest = {
+                .buf                    = &curTable,
+                .name                   = "\0\0\0\0\0\0\0\0",
+                .ext                    = "\0\0\0",
+                .parent_cluster_number  = (curTable.table[0].cluster_high << 16 | curTable.table[0].cluster_low),
+                .buffer_size            = 0,
+            };
+
+            // clear tempRequest name and ext
+            for (int j = 0; j < 8; j++){
+                tempRequest.name[j] = '\0';
+            }
+            for (int j = 0; j < 3; j++){
+                tempRequest.ext[j] = '\0';
+            }
+
+            // set it to name and ext
+            int temp_int = 0;
+            if (slen(name) > 8){
+                temp_int = 8;
+            } else {
+                temp_int = slen(name);
+            }
+            for (int j = 0; j < temp_int; j++){
+                tempRequest.name[j] = name[j];
+            }
+            if (slen(ext) > 3){
+                temp_int = 3;
+            } else {
+                temp_int = slen(ext);
+            }
+            for (int j = 0; j < temp_int; j++){
+                tempRequest.ext[j] = ext[j];
+            }
+            syscall(1, (uint32_t) &tempRequest, (uint32_t)&retcode, 0);
+            if (retcode != 0){
+                syscall(5, (uint32_t) "Directory not found\n", 21, 0xf);
+                return;
+            }
+        }
+        // save current directory name
+        for(int j = 0 ; j < 300 ; j++){
+            curDirName[j] = '\0';
+        }
+        for(int j = 0 ; j < slen(temp) ; j++){
+            curDirName[j] = temp[j];
+        }
+        return;
+    }
+
     char name[9] = "\0\0\0\0\0\0\0\0\0";
     char ext[4] = "\0\0\0\0";
     struct FAT32DirectoryTable table = curTable;
@@ -98,6 +201,14 @@ void cd(char* filename){
         request.ext[i] = ext[i];
     }
     syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
+    if(retcode != 0){
+        syscall(5, (uint32_t) "No such directory\n", 18, 0xf);
+        return;
+    }
+    for (int i = 0; i < slen(name); i++){
+        curDirName[slen(curDirName)] = name[i];
+    }
+    curDirName[slen(curDirName)] = '/';
     curTable = table;
     currenDir = (table.table[0].cluster_high << 16 | table.table[0].cluster_low);
 }
@@ -282,19 +393,10 @@ void dfsPath(char* filename, char* path, struct FAT32DirectoryTable table, char*
 }
 
 void whereis(char *filename){
-    uint8_t retcode = 1;
     
-    // start from root so table is dir table
+    // start from root so table is root table
     struct FAT32DirectoryTable table = {0};
-    struct FAT32DriverRequest request = {
-            .buf                   = &table,
-            .name                  = "ROOT",
-            .ext                   = "\0\0\0",
-            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
-            .buffer_size           = CLUSTER_SIZE,
-    };
-
-    syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
+    table = rootTable;
 
     // list to store all the paths found (for multiple file with same name)
     char found[2048];
@@ -336,12 +438,13 @@ int main(void) {
             .buffer_size           = CLUSTER_SIZE,
     };
     syscall(1, (uint32_t) &request2, (uint32_t) &retcode, 0);
+    rootTable = curTable;
 
     while (TRUE) {
         // ntarAja in bios green light
         syscall(5, (uint32_t) "ntarAja@OS-IF2230:", 19, 0x0A);
         syscall(5, (uint32_t) curDirName, 300, 0x09);
-        syscall(5, (uint32_t) "/$ ", 3, 0xF);
+        syscall(5, (uint32_t) "$ ", 2, 0xF);
         
         // puts("ntarAja@OS-IF2230", 17, 0x0A);
         // puts(":", 1, 0xF);
