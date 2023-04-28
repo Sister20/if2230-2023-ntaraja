@@ -32,23 +32,32 @@ _Noreturn void kernel_setup(void) {
     };
     read(request);
 
-    struct ClusterBuffer cbuf[1];
-    for (int i = 0; i < CLUSTER_SIZE; i++) {
-        cbuf[0].buf[i] = i + 'a';
+    struct ClusterBuffer cbuf[2];
+    for(int j = 0; j < 2; j++){
+        for (int i = 0; i < CLUSTER_SIZE; i++) {
+            cbuf[j].buf[i] = 'a' + j;
+        }
     }
+    
+    struct FAT32DirectoryTable table;
 
     struct FAT32DriverRequest ikanaide = {
-            .buf = cbuf,
+            .buf = &table,
             .name = "ikanaide",
             .ext = "\0\0\0",
             .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size = 0
+    };
+    write(ikanaide);
+    read_directory(ikanaide);
+    struct FAT32DriverRequest new_file = {
+            .buf = cbuf,
+            .name = "filefile",
+            .ext = "exe",
+            .parent_cluster_number = (table.table[0].cluster_high << 16 | table.table[0].cluster_low),
             .buffer_size = CLUSTER_SIZE
     };
-    delete(ikanaide);
-    write(ikanaide);
-
-    memcpy(ikanaide.name, "daijoubu", 8);
-    write(ikanaide);
+    write(new_file);
 
     set_tss_kernel_current_stack();
     kernel_execute_user_program((uint8_t *) 0);

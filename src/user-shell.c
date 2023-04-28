@@ -1,6 +1,8 @@
 #include "lib-header/stdtype.h"
 #include "lib-header/filesystem/fat32.h"
 
+static uint32_t currenDir = ROOT_CLUSTER_NUMBER;
+
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
     __asm__ volatile("mov %0, %%ecx" : /* <Empty> */ : "r"(ecx));
@@ -15,6 +17,95 @@ int length_of(const char* str){
     int i = 0;
     while (str[i] != '\0'){i++;str++;}
     return i;
+}
+
+char* scantil(char* s, char* res, , char mark){
+    int i = 0;
+    while(s[i]!=mark && s[i]!='\0'){
+        res[i] = s[i];
+        i++;
+    }
+    res[i] = '\0';
+
+    return s+i;
+}
+
+int slen(const char* s){
+    int len = 0;
+    while(s[len]!='\0'){
+        len++;
+    }
+    return len;
+}
+
+bool strcmp(const char* str1, const char* str2, int n) {
+    int i = 0;
+    while (*str1 && (*str1 == *str2) && i < n) {
+        str1++;
+        str2++;
+        i++;
+    }
+    
+    return i==n;
+}
+
+void cd(char* filename){
+    char name[9] = "\0\0\0\0\0\0\0\0\0";
+    char ext[4] = "\0\0\0\0";
+    char* temp = scantil(filename, (char *)name, '.') + 1;
+    for(int i = 0; i < 3; i++){
+        ext[i] = temp[i];
+    }
+    struct FAT32DirectoryTable table;
+    struct FAT32DriverRequest request = {
+            .buf = &table,
+            .name = "\0\0\0\0\0\0\0\0",
+            .ext = "\0\0\0",
+            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size = 0
+    };
+    int32_t retcode = 0;
+    for(int i = 0; i < slen(name); i++){
+        request.name[i] = name[i];
+    }
+    for(int i = 0; i < slen(ext); i++){
+        request.ext[i] = ext[i];
+    }
+    syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
+    currenDir = (table.table[0].cluster_high << 16 | table.table[0].cluster_low);
+}
+
+void cat(char* filename){
+    char name[9] = "\0\0\0\0\0\0\0\0\0";
+    char ext[4] = "\0\0\0\0";
+    char* temp = scantil(filename, (char *)name, '.') + 1;
+    for(int i = 0; i < 3; i++){
+        ext[i] = temp[i];
+    }
+    struct ClusterBuffer cl           = {0};
+    struct FAT32DriverRequest request = {
+            .buf                   = &cl,
+            .name                  = "\0\0\0\0\0\0\0\0",
+            .ext                   = "\0\0\0",
+            .parent_cluster_number = currenDir,
+            .buffer_size           = CLUSTER_SIZE,
+    };
+    int32_t retcode = 0;
+    for(int i = 0; i < slen(name); i++){
+        request.name[i] = name[i];
+    }
+    for(int i = 0; i < slen(ext); i++){
+        request.ext[i] = ext[i];
+    }
+    syscall(0, (uint32_t) &request, (uint32_t) &retcode, 0);
+    int size = 0;
+    while(cl.buf[size] != '\0'){
+        size++;
+    }
+    
+    if (retcode == 0){
+        syscall(5, (uint32_t) cl.buf, size, 0xf);
+    }
 }
 
 int main(void) {
