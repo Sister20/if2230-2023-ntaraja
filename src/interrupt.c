@@ -79,6 +79,7 @@ void syscall(struct CPURegister cpu, __attribute__((unused)) struct InterruptSta
         get_keyboard_buffer(buf);
         memcpy((char *) cpu.ebx, buf, cpu.ecx);
     } else if (cpu.eax == 5) {
+        if (cpu.ecx == 0) return;
         puts((char *) cpu.ebx, cpu.ecx, cpu.edx); // Modified puts() on kernel side
     }
 }

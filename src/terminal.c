@@ -1,9 +1,9 @@
 #include "lib-header/terminal.h"
 
-const size_t VGA_WIDTH = 80;
-const size_t VGA_HEIGHT = 25;
-size_t row;
-size_t column;
+const uint8_t VGA_WIDTH = 80;
+const uint8_t VGA_HEIGHT = 25;
+uint8_t row;
+uint8_t column;
 uint8_t background_color;
 
 void init_terminal(void) {
@@ -37,11 +37,13 @@ void terminal_setBackgroundColor(uint8_t color) {
 
 void puts(char* data, uint32_t len, uint32_t color) {
     for (size_t i = 0; i < len; i++) {
+        framebuffer_get_cursor(&row, &column);
         framebuffer_write(row, column, data[i], (uint8_t)color, (uint8_t)background_color);
         if (++column == VGA_WIDTH) {
             column = 0;
             if (++row == VGA_HEIGHT)
-                row = 0;
+                row = VGA_HEIGHT-1;
         }
+        framebuffer_set_cursor(row, column);
     }
 }
