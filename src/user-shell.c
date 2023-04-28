@@ -137,13 +137,13 @@ void rm(char* filename) {
     char ext[4] = "\0\0\0\0";
     readfname(filename, (char *)name, (char*) ext);
     
-    struct ClusterBuffer cl           = {0};
+    struct FAT32DirectoryTable table;
     struct FAT32DriverRequest request = {
-            .buf                   = &cl,
+            .buf                   = &table,
             .name                  = "\0\0\0\0\0\0\0\0",
             .ext                   = "\0\0\0",
             .parent_cluster_number = currenDir,
-            .buffer_size           = CLUSTER_SIZE,
+            .buffer_size           = 0,
     };
     int32_t retcode = 0;
     for(int i = 0; i < slen(name); i++){
@@ -152,10 +152,71 @@ void rm(char* filename) {
     for(int i = 0; i < slen(ext); i++){
         request.ext[i] = ext[i];
     }
-    syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0);
+    syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
+    if(retcode == 0){
+        if(slen(table.table[1].name) == 0 && slen(table.table[1].ext) == 0){
+            syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0);
+        }
+    }
+    else if (retcode == 1){
+        syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0);
+    }
+    else {
+        syscall(5, (uint32_t) "rm: cannot remove '", 20, 0xf);
+        syscall(5, (uint32_t) filename, 8, 0xf);
+        syscall(5, (uint32_t) "': No such file or directory\n", 30, 0xf);
+    }
+}
+
+void mkdir(char* filename) {
+    char name[9] = "\0\0\0\0\0\0\0\0\0";
+    char ext[4] = "\0\0\0\0";
+    readfname(filename, (char *)name, (char*) ext);
+    bool existDuplicate = FALSE;
+    struct FAT32DirectoryTable table = curTable;
+
+    for(int i = 1 ; i < 64 ; i++){
+        if(table.table[i].attribute || table.table[i].cluster_high || table.table[i].cluster_low){
+            if (strcmp(table.table[i].name, filename, slen(filename)) && slen(table.table[i].ext) == 0) {
+                syscall(5, (uint32_t) "mkdir: cannot create directory '", 33, 0xf);
+                syscall(5, (uint32_t) filename, 8, 0xf);
+                syscall(5, (uint32_t) "': File exists\n", 16, 0xf);
+                existDuplicate = TRUE;
+                break;
+            }
+        }
+    }
+
+    if (!existDuplicate) {
+        struct FAT32DriverRequest request = {
+            .buf = &table,
+            .name = "\0\0\0\0\0\0\0\0",
+            .ext = "\0\0\0",
+            .parent_cluster_number = currenDir,
+            .buffer_size = 0
+        };
+        int32_t retcode = 0;
+        for(int i = 0; i < slen(name); i++){
+            request.name[i] = name[i];
+        }
+        syscall(2, (uint32_t) &request, (uint32_t) &retcode, 0);
+    }
 }
 
 void ls(){
+    uint32_t retcode;
+    struct FAT32DriverRequest request2 = {
+            .buf                   = &curTable,
+            .name                  = "\0\0\0\0\0\0\0\0",
+            .ext                   = "\0\0\0",
+            .parent_cluster_number = currenDir,
+            .buffer_size           = 0,
+    };
+    for(int i = 0; i < slen(curTable.table[0].name); i++){
+        request2.name[i] = curTable.table[0].name[i];
+    }
+    syscall(1, (uint32_t) &request2, (uint32_t) &retcode, 0);
+
     struct FAT32DirectoryTable table = curTable;
     for(int i = 1 ; i < 64 ; i++){
         if(table.table[i].attribute || table.table[i].cluster_high || table.table[i].cluster_low){
@@ -361,6 +422,8 @@ int main(void) {
             whereis(buf+8);
         } else if(strcmp(buf, "ls", 2)){
             ls();
+        } else if(strcmp(buf, "mkdir", 5)) {
+            mkdir(buf + 6);
         }
     }
 
