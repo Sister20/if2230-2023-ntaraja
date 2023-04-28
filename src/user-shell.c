@@ -2,6 +2,7 @@
 #include "lib-header/filesystem/fat32.h"
 
 static uint32_t currenDir = ROOT_CLUSTER_NUMBER;
+static struct FAT32DirectoryTable curTable; 
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
@@ -19,15 +20,20 @@ int length_of(const char* str){
     return i;
 }
 
-char* scantil(char* s, char* res, , char mark){
+void readfname(char* s, char* name, char* ext){
     int i = 0;
-    while(s[i]!=mark && s[i]!='\0'){
-        res[i] = s[i];
+    while(s[i]!='.' && s[i]!='\0'){
+        name[i] = s[i];
         i++;
     }
-    res[i] = '\0';
-
-    return s+i;
+    name[i] = '\0';
+    i++;
+    int j = 0;
+    while(s[i]!='\0' && j!=3){
+        ext[j] = s[i];
+        i++;
+        j++;
+    }
 }
 
 int slen(const char* s){
@@ -52,11 +58,8 @@ bool strcmp(const char* str1, const char* str2, int n) {
 void cd(char* filename){
     char name[9] = "\0\0\0\0\0\0\0\0\0";
     char ext[4] = "\0\0\0\0";
-    char* temp = scantil(filename, (char *)name, '.') + 1;
-    for(int i = 0; i < 3; i++){
-        ext[i] = temp[i];
-    }
-    struct FAT32DirectoryTable table;
+    struct FAT32DirectoryTable table = curTable;
+    readfname(filename, (char *)name, (char *)ext);
     struct FAT32DriverRequest request = {
             .buf = &table,
             .name = "\0\0\0\0\0\0\0\0",
@@ -72,16 +75,14 @@ void cd(char* filename){
         request.ext[i] = ext[i];
     }
     syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
+    curTable = table;
     currenDir = (table.table[0].cluster_high << 16 | table.table[0].cluster_low);
 }
 
 void cat(char* filename){
     char name[9] = "\0\0\0\0\0\0\0\0\0";
     char ext[4] = "\0\0\0\0";
-    char* temp = scantil(filename, (char *)name, '.') + 1;
-    for(int i = 0; i < 3; i++){
-        ext[i] = temp[i];
-    }
+    readfname(filename, (char *)name, (char *)ext);
     struct ClusterBuffer cl           = {0};
     struct FAT32DriverRequest request = {
             .buf                   = &cl,
@@ -139,6 +140,11 @@ int main(void) {
 
         syscall(4, (uint32_t) buf, 256, 0);
         // syscall(5, (uint32_t) buf, 256, 0xF);
+        if(strcmp(buf, "cat", 3)){
+            cat(buf+4);
+        } else if(strcmp(buf, "cd", 2)){
+            cd(buf+3);
+        }
     }
 
     return 0;
