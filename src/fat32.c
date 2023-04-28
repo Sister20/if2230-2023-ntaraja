@@ -187,7 +187,6 @@ void add_directory_entry(struct FAT32DriverRequest request, uint32_t cluster) {
     dir_table->table[folder].filesize = request.buffer_size;
 }
 
-// TODO: Change to use ClusterBuffer
 bool is_dir_cluster(uint32_t cluster) {
     struct FAT32DirectoryTable temp_table;
     for (uint32_t i = 2; i < CLUSTER_MAP_SIZE; i++) {
@@ -207,10 +206,9 @@ bool is_dir_cluster(uint32_t cluster) {
     return cluster_dir_map[cluster];
 }
 
-// TODO: Change to use ClusterBuffer
 int8_t read_directory(struct FAT32DriverRequest request) {
 //    read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 1);
-    read_to_dir_table(request.parent_cluster_number, 1);
+//    read_to_dir_table(request.parent_cluster_number, 1);
 
     int32_t index = dir_table_search(request.name, request.ext);
 
@@ -219,7 +217,10 @@ int8_t read_directory(struct FAT32DriverRequest request) {
     }
 
     if (dir_table->table[index].attribute == ATTR_SUBDIRECTORY && dir_table->table[index].undelete != 0xE5) {
-        request.buf = &dir_table->table;
+//        request.buf = &dir_table->table;
+        request.parent_cluster_number = (dir_table->table[index].cluster_high << 16) | dir_table->table[index].cluster_low;
+        read_to_dir_table(request.parent_cluster_number, 1);
+        memcpy(request.buf, dir_table->table, sizeof(struct FAT32DirectoryTable));
         return 0; // Success
     } else if (dir_table->table[index].attribute != ATTR_SUBDIRECTORY) {
         return 1; // Not a folder
