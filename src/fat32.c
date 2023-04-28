@@ -295,7 +295,11 @@ int8_t write(struct FAT32DriverRequest request) {
                 struct FAT32DirectoryTable new_table;
                 init_directory_entry(&new_table.table[0], request.name, usable_cluster);
                 add_directory_entry(request, usable_cluster);
-                flush(usable_cluster);
+                flush(request.parent_cluster_number);
+
+                memset(&driver.cluster_buf, 0, CLUSTER_SIZE);
+                memcpy(&driver.cluster_buf, &new_table, sizeof(struct FAT32DirectoryTable));
+                write_clusters(&driver.cluster_buf, usable_cluster, 1);
                 return 0;
             }
             usable_cluster++;
