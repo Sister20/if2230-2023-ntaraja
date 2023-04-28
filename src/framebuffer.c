@@ -26,14 +26,18 @@ void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg)
     uint8_t attrib = (bg << 4) | (fg&0x0F);
     volatile uint16_t * where = (uint16_t *) MEMORY_FRAMEBUFFER + (row*80 + col);
 
-    // if in the last row, scroll
-    if (row == 25) {
-        for (int i = 0; i < 80*24; i++) {
-            *(where+i) = *(where+i+80);
+    // if in the last row and entered, scroll
+    if (row == 24 && c == '\n'){
+        for (int i = 0; i < 80*24*2; i+=2) {
+            memcpy((void*)MEMORY_FRAMEBUFFER+i, (void*)MEMORY_FRAMEBUFFER+i+160, 1);
+            memcpy((void*)MEMORY_FRAMEBUFFER+i+1, (void*)MEMORY_FRAMEBUFFER+i+161, 1);
         }
-        for (int i = 0; i < 80; i++) {
-            *(where+80*24+i) = 0x0700;
+        for (int i = 0; i < 80*2; i+=2) {
+            memset((void*)MEMORY_FRAMEBUFFER+80*24*2+i, 0x00, 1);
+            memset((void*)MEMORY_FRAMEBUFFER+80*24*2+i+1, 0x07, 1);
         }
+        // set framecursor to be at start of last row
+        framebuffer_set_cursor(24, 0);
         return;
     }
 
