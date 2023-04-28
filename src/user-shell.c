@@ -87,7 +87,7 @@ void cd(char* filename){
             .buf = &table,
             .name = "\0\0\0\0\0\0\0\0",
             .ext = "\0\0\0",
-            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .parent_cluster_number = currenDir,
             .buffer_size = 0
     };
     int32_t retcode = 0;
