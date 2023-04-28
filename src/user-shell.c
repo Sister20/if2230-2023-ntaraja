@@ -155,6 +155,32 @@ void rm(char* filename) {
     syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0);
 }
 
+void ls(){
+    struct FAT32DirectoryTable table = curTable;
+    for(int i = 1 ; i < 64 ; i++){
+        if(table.table[i].attribute || table.table[i].cluster_high || table.table[i].cluster_low){
+            int temp_int = 0;
+            if(slen(table.table[i].name) > 8){
+                temp_int = 8;
+            } else {
+                temp_int = slen(table.table[i].name);
+            }
+            syscall(5, (uint32_t) table.table[i].name, temp_int, 0xf);
+            temp_int = 0;
+            if(slen(table.table[i].ext) > 3){
+                temp_int = 3;
+            } else {
+                temp_int = slen(table.table[i].ext);
+            }
+            if(temp_int > 0){
+                syscall(5, (uint32_t) ".", 1, 0xf);
+            }
+            syscall(5, (uint32_t) table.table[i].ext, temp_int, 0xf);
+            syscall(5, (uint32_t) "\n", 1, 0xf);
+        }
+    }
+}
+
 void dfsPath(char* filename, char* path, struct FAT32DirectoryTable table, char* found){
     // parse filename to name and ext
     char name[9] = "\0\0\0\0\0\0\0\0\0";
@@ -301,6 +327,16 @@ int main(void) {
     }
 
     char buf[256];
+
+    struct FAT32DriverRequest request2 = {
+            .buf                   = &curTable,
+            .name                  = "ROOT",
+            .ext                   = "\0\0\0",
+            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size           = CLUSTER_SIZE,
+    };
+    syscall(1, (uint32_t) &request2, (uint32_t) &retcode, 0);
+
     while (TRUE) {
         // ntarAja in bios green light
         syscall(5, (uint32_t) "ntarAja@OS-IF2230:", 19, 0x0A);
@@ -323,6 +359,8 @@ int main(void) {
             rm(buf + 3);
         } else if(strcmp(buf, "whereis", 7)){
             whereis(buf+8);
+        } else if(strcmp(buf, "ls", 2)){
+            ls();
         }
     }
 
