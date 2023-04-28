@@ -103,6 +103,29 @@ void cat(char* filename){
     }
 }
 
+void rm(char* filename) {
+    char name[9] = "\0\0\0\0\0\0\0\0\0";
+    char ext[4] = "\0\0\0\0";
+    readfname(filename, (char *)name, (char*) ext);
+    
+    struct ClusterBuffer cl           = {0};
+    struct FAT32DriverRequest request = {
+            .buf                   = &cl,
+            .name                  = "\0\0\0\0\0\0\0\0",
+            .ext                   = "\0\0\0",
+            .parent_cluster_number = currenDir,
+            .buffer_size           = CLUSTER_SIZE,
+    };
+    int32_t retcode = 0;
+    for(int i = 0; i < slen(name); i++){
+        request.name[i] = name[i];
+    }
+    for(int i = 0; i < slen(ext); i++){
+        request.ext[i] = ext[i];
+    }
+    syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0);
+}
+
 int main(void) {
     static char *curdir = "";
     struct ClusterBuffer cl           = {0};
@@ -138,6 +161,8 @@ int main(void) {
             cat(buf+4);
         } else if(strcmp(buf, "cd", 2)){
             cd(buf+3);
+        } else if(strcmp(buf, "rm", 2)) {
+            rm(buf + 3);
         }
     }
 
