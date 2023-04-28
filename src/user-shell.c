@@ -155,6 +155,135 @@ void rm(char* filename) {
     syscall(3, (uint32_t) &request, (uint32_t) &retcode, 0);
 }
 
+void dfsPath(char* filename, char* path, struct FAT32DirectoryTable table, char* found){
+    // parse filename to name and ext
+    char name[9] = "\0\0\0\0\0\0\0\0\0";
+    char ext[4] = "\0\0\0\0";
+    readfname(filename, (char *)name, (char *)ext);
+
+    // iterate over all of the table
+    for(int i = 1 ; i < 64 ; i++){
+        if(strcmp(table.table[i].name, name, slen(name)) && strcmp(table.table[i].ext, ext, slen(ext))){
+            //add name to path
+            int temp_int = 0;
+            if(slen(table.table[i].name) > 8){
+                temp_int = 8;
+            } else {
+                temp_int = slen(table.table[i].name);
+            }
+            for(int j = 0 ; j < temp_int ; j++){
+                path[slen(path)] = table.table[i].name[j];
+            }
+
+            //if have ext, add it to path
+            if(slen(table.table[i].ext) > 0){
+                if(slen(table.table[i].ext) > 3){
+                    temp_int = 3;
+                } else {
+                    temp_int = slen(table.table[i].ext);
+                }
+                path[slen(path)] = '.';
+                for(int j = 0 ; j < temp_int ; j++){
+                    path[slen(path)] = table.table[i].ext[j];
+                }
+            }
+
+            //add / to the end as well
+            path[slen(path)] = '/';
+            path[slen(path)] = '\0';
+
+            //add path to found
+            for(int j = 0 ; j < slen(path) ; j++){
+                found[slen(found)] = path[j];
+            }
+            found[slen(found)] = '\n';
+            found[slen(found)] = '\0';
+        }
+
+        if(table.table[i].attribute || table.table[i].cluster_high || table.table[i].cluster_low){
+            //create new path
+            char newPath[2048];
+            for(int j = 0 ; j < 2048 ; j++){
+                newPath[j] = '\0';
+            }
+            for(int j = 0 ; j < slen(path) ; j++){
+                newPath[j] = path[j];
+            }
+            newPath[slen(path)] = '\0';
+
+            //add current name to path
+            for(int j = 0 ; j < slen(table.table[i].name) ; j++){
+                newPath[slen(newPath)] = table.table[i].name[j];
+            }
+
+            //if have ext, add it to path
+            if(slen(table.table[i].ext) > 0){
+                newPath[slen(newPath)] = '.';
+                for(int j = 0 ; j < slen(table.table[i].ext) ; j++){
+                    newPath[slen(newPath)] = table.table[i].ext[j];
+                }
+            }
+
+            //add / to the end as well
+            newPath[slen(newPath)] = '/';
+            newPath[slen(newPath)] = '\0';
+
+            //get the new table
+            struct FAT32DirectoryTable newTable = {0};
+            struct FAT32DriverRequest newRequest = {
+                    .buf                   = &newTable,
+                    .name                  = "\0\0\0\0\0\0\0\0",
+                    .ext                   = "\0\0\0",
+                    .parent_cluster_number = table.table[i].cluster_high << 16 | table.table[i].cluster_low,
+                    .buffer_size           = CLUSTER_SIZE,
+            };
+
+            // set the request name and ext
+            for(int k = 0; k < slen(table.table[i].name); k++){
+                newRequest.name[k] = table.table[i].name[k];
+            }
+            for(int k = 0; k < slen(table.table[i].ext); k++){
+                newRequest.ext[k] = table.table[i].ext[k];
+            }
+
+            uint8_t retcode = 1;
+            syscall(1, (uint32_t) &newRequest, (uint32_t) &retcode, 0);
+            if (retcode == 0){
+                dfsPath(filename, newPath, newTable, found);
+            }
+        }
+    }
+}
+
+void whereis(char *filename){
+    uint8_t retcode = 1;
+    
+    // start from root so table is dir table
+    struct FAT32DirectoryTable table = {0};
+    struct FAT32DriverRequest request = {
+            .buf                   = &table,
+            .name                  = "ROOT",
+            .ext                   = "\0\0\0",
+            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size           = CLUSTER_SIZE,
+    };
+
+    syscall(1, (uint32_t) &request, (uint32_t) &retcode, 0);
+
+    // list to store all the paths found (for multiple file with same name)
+    char found[2048];
+    found[0] = '\0';
+    char path[2048];
+    path[0] = '/';
+    path[1] = '\0';
+    dfsPath(filename, path, table, found);
+    if (slen(found) != 0){
+        syscall(5, (uint32_t) found, slen(found), 0xf);
+    } else {
+        syscall(5, (uint32_t) "File not found\n", 15, 0xf);
+    }
+}
+
 int main(void) {
     struct ClusterBuffer cl           = {0};
     struct FAT32DriverRequest request = {
@@ -192,6 +321,8 @@ int main(void) {
             cd(buf+3);
         } else if(strcmp(buf, "rm", 2)) {
             rm(buf + 3);
+        } else if(strcmp(buf, "whereis", 7)){
+            whereis(buf+8);
         }
     }
 
