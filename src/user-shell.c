@@ -14,12 +14,6 @@ void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("int $0x30");
 }
 
-int length_of(const char* str){
-    int i = 0;
-    while (str[i] != '\0'){i++;str++;}
-    return i;
-}
-
 void readfname(char* s, char* name, char* ext){
     int i = 0;
     while(s[i]!='.' && s[i]!='\0'){
