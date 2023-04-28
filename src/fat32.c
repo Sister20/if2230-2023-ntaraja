@@ -214,7 +214,7 @@ int8_t read(struct FAT32DriverRequest request) {
         return 3; // Not found
     }
 
-    if (dir_table->table[index].attribute != ATTR_SUBDIRECTORY) {
+    if (dir_table->table[index].attribute != ATTR_ARCHIVE) {
         return 1; // Not a file
     }
 
@@ -268,7 +268,7 @@ int8_t write(struct FAT32DriverRequest request) {
         do {
             if (fat_table->cluster_map[usable_cluster] == FAT32_FAT_EMPTY_ENTRY) {
                 fat_table->cluster_map[usable_cluster] = FAT32_FAT_END_OF_FILE;
-                struct FAT32DirectoryTable new_table;
+                struct FAT32DirectoryTable new_table = {0};
                 init_directory_entry(&new_table.table[0], request.name, usable_cluster);
                 add_directory_entry(request, usable_cluster);
                 flush(request.parent_cluster_number);
