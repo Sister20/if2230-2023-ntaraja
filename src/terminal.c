@@ -41,6 +41,12 @@ void puts(char* data, uint32_t len, uint32_t color) {
             break;
         }
         framebuffer_get_cursor(&row, &column);
+        if(data[i] == '\n'){
+            row++;
+            column = 0;
+            framebuffer_set_cursor(row, column);
+            continue;
+        }
         framebuffer_write(row, column, data[i], (uint8_t)color, (uint8_t)background_color);
         if (++column == VGA_WIDTH) {
             column = 0;
