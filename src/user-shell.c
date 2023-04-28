@@ -2,7 +2,36 @@
 #include "lib-header/filesystem/fat32.h"
 
 static uint32_t currenDir = ROOT_CLUSTER_NUMBER;
-static struct FAT32DirectoryTable curTable; 
+static struct FAT32DirectoryTable curTable;
+static char curDirName[300] = "";
+
+struct stack{
+    char* data[100];
+    int top;
+};
+
+void push(struct stack* s, char* data){
+    s->top++;
+    s->data[s->top] = data;
+}
+
+void pop(struct stack* s){
+    s->data[s->top] = "";
+    s->top--;
+}
+
+void getTop(struct stack s, char *x){
+    char* c = s.data[s.top];
+    int i = 0;
+    while(c[i]!='\0'){
+        x[i] = c[i];
+        i++;
+    }
+}
+
+void initiateStack(struct stack* s){
+    s->top = -1;
+}
 
 void syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
     __asm__ volatile("mov %0, %%ebx" : /* <Empty> */ : "r"(ebx));
@@ -127,7 +156,6 @@ void rm(char* filename) {
 }
 
 int main(void) {
-    static char *curdir = "";
     struct ClusterBuffer cl           = {0};
     struct FAT32DriverRequest request = {
             .buf                   = &cl,
@@ -142,11 +170,12 @@ int main(void) {
         // syscall(5, (uint32_t) "owo\n", 4, 0xF);
         // syscall(5, (uint32_t) cl.buf, 10, 0xf);
     }
+
     char buf[256];
     while (TRUE) {
         // ntarAja in bios green light
-        syscall(5, (uint32_t) "ntarAja@OS-IF2230:", 18, 0x0A);
-        syscall(5, (uint32_t) curdir, 256, 0x09);
+        syscall(5, (uint32_t) "ntarAja@OS-IF2230:", 19, 0x0A);
+        syscall(5, (uint32_t) curDirName, 300, 0x09);
         syscall(5, (uint32_t) "/$ ", 3, 0xF);
         
         // puts("ntarAja@OS-IF2230", 17, 0x0A);
