@@ -18,7 +18,7 @@ int length_of(const char* str){
 }
 
 int main(void) {
-    static char *curdir;
+    static char *curdir = "";
     struct ClusterBuffer cl           = {0};
     struct FAT32DriverRequest request = {
             .buf                   = &cl,
@@ -37,7 +37,7 @@ int main(void) {
     while (TRUE) {
         // ntarAja in bios green light
         syscall(5, (uint32_t) "ntarAja@OS-IF2230:", 18, 0x0A);
-        syscall(5, (uint32_t) curdir, length_of(curdir), 0x09);
+        syscall(5, (uint32_t) curdir, 256, 0x09);
         syscall(5, (uint32_t) "/$ ", 3, 0xF);
         
         // puts("ntarAja@OS-IF2230", 17, 0x0A);

@@ -37,6 +37,9 @@ void terminal_setBackgroundColor(uint8_t color) {
 
 void puts(char* data, uint32_t len, uint32_t color) {
     for (size_t i = 0; i < len; i++) {
+        if(data[i] == '\0'){
+            break;
+        }
         framebuffer_get_cursor(&row, &column);
         framebuffer_write(row, column, data[i], (uint8_t)color, (uint8_t)background_color);
         if (++column == VGA_WIDTH) {
