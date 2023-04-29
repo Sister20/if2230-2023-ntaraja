@@ -18,10 +18,23 @@
 - [x] Keyboard Device Driver
 - [x] Filesystem
 
+## Milestone 3
+- [x] Paging Data Structures
+- [x] Higher Half Kernel
+- [x] Activate Paging
+- [x] Inserter
+- [x] User GDT & Task State Segment
+- [x] Simple Memory Allocator
+- [x] Simple User Program
+- [x] Launching User Mode
+- [x] System Calls
+- [x] Shell Implementation
+- [x] Built-in Utility Command
+
 ## Author
-| Name         | NIM            | Github |
-| :---         |     :---:      |          ---: |
-| Christian Albert Hasiholan  | 13521078     |[ChrisAlberth](https://github.com/ChrisAlberth) |
-| Tobias Natalio Sianipar  | 13521090     |[tobisns](https://github.com/tobisns) |
-| Ammar Rasyad Chaeroel  | 13521136     |[ammarasyad](https://github.com/ammarasyad) |
-| Bintang Dwi Marthen  | 13521144     |[Marthenn](https://github.com/Marthenn) |
+| Name                       |   NIM    |                                          Github |
+|:---------------------------|:--------:|------------------------------------------------:|
+| Christian Albert Hasiholan | 13521078 | [ChrisAlberth](https://github.com/ChrisAlberth) |
+| Tobias Natalio Sianipar    | 13521090 |           [tobisns](https://github.com/tobisns) |
+| Ammar Rasyad Chaeroel      | 13521136 |     [ammarasyad](https://github.com/ammarasyad) |
+| Bintang Dwi Marthen        | 13521144 |         [Marthenn](https://github.com/Marthenn) |
