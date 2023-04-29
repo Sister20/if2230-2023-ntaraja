@@ -312,10 +312,13 @@ void cd(char* filename){
         syscall(5, (uint32_t) "No such directory\n", 18, 0xf);
         return;
     }
-    for (int i = 0; i < slen(name); i++){
-        curDirName[slen(curDirName)] = name[i];
+    if(!strcmp(curDirName + 1,name,slen(name))){
+        for (int i = 0; i < slen(name); i++){
+            curDirName[slen(curDirName)] = name[i];
+        }
+        curDirName[slen(curDirName)] = '/';
     }
-    curDirName[slen(curDirName)] = '/';
+    
     curTable = table;
     currenDir = (table.table[0].cluster_high << 16 | table.table[0].cluster_low);
 }
