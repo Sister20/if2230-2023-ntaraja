@@ -1,4 +1,5 @@
 #include "lib-header/terminal.h"
+#include "lib-header/stdmem.h"
 
 const uint8_t VGA_WIDTH = 80;
 const uint8_t VGA_HEIGHT = 25;
@@ -42,7 +43,18 @@ void puts(char* data, uint32_t len, uint32_t color) {
         }
         framebuffer_get_cursor(&row, &column);
         if(data[i] == '\n'){
-            row++;
+            if (row == 24){
+                for (int i = 0; i < 80*24*2; i+=2) {
+                    memcpy((void*)MEMORY_FRAMEBUFFER+i, (void*)MEMORY_FRAMEBUFFER+i+160, 1);
+                    memcpy((void*)MEMORY_FRAMEBUFFER+i+1, (void*)MEMORY_FRAMEBUFFER+i+161, 1);
+                }
+                for (int i = 0; i < 80*2; i+=2) {
+                    memset((void*)MEMORY_FRAMEBUFFER+80*24*2+i, 0x00, 1);
+                    memset((void*)MEMORY_FRAMEBUFFER+80*24*2+i+1, 0x07, 1);
+                }
+            }  else {
+                row++;
+            }
             column = 0;
             framebuffer_set_cursor(row, column);
             continue;
