@@ -88,10 +88,10 @@ void cd(char* filename){
             syscall(5, (uint32_t) "Already at root directory\n", 27, 0xf);
             return;
         }
-        currenDir = (uint32_t)curTable.table[0].cluster_high << 16 | curTable.table[0].cluster_low; // target cluster number
+        // currenDir = (uint32_t)curTable.table[0].cluster_high << 16 | curTable.table[0].cluster_low; // target cluster number
     
         // start from root so curtable is set to root table
-        curTable = rootTable;
+        struct FAT32DirectoryTable table = rootTable;
 
         // iterate from root to parent
         char temp[300] = "\0";
@@ -104,7 +104,7 @@ void cd(char* filename){
         for (int i = 0 ; i < slen(curDirName); i++){
             post[i] = curDirName[i];
         }
-        while(!clusterExist(curTable, currenDir)){
+        while(!clusterExist(table, currenDir)){
             // save current directory name
             char tempChar[300] = "\0";
             for (int j = 0 ; j < 300 ; j++){
@@ -131,12 +131,11 @@ void cd(char* filename){
             // while(!(strcmp(curTable.table[temp_int].name, name, slen(name)) && strcmp(curTable.table[temp_int].ext, ext, slen(ext)))){
             //     temp_int++;
             // }
-
             struct FAT32DriverRequest tempRequest = {
-                .buf                    = &curTable,
+                .buf                    = &table,
                 .name                   = "\0\0\0\0\0\0\0\0",
                 .ext                    = "\0\0\0",
-                .parent_cluster_number  = (curTable.table[0].cluster_high << 16 | curTable.table[0].cluster_low),
+                .parent_cluster_number  = (table.table[0].cluster_high << 16 | table.table[0].cluster_low),
                 .buffer_size            = 0,
             };
 
@@ -179,6 +178,9 @@ void cd(char* filename){
         for(int j = 0 ; j < slen(temp) ; j++){
             curDirName[j] = temp[j];
         }
+        curTable = table;
+        currenDir = (table.table[0].cluster_high << 16 | table.table[0].cluster_low);
+
         return;
     }
 
