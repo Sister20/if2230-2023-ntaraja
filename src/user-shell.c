@@ -94,9 +94,11 @@ void cd(char* filename){
         struct FAT32DirectoryTable table = rootTable;
 
         // iterate from root to parent
-        char temp[300] = "\0";
-        temp[0] = '/';
-        temp[1] = '\0';
+        char prev[300] = "\0";
+        for(int i = 0 ; i < 300 ; i++){
+            prev[i] = '\0';
+        }
+        prev[0] = '/';
         int i = 0;
         char pre[300] = "\0";
         char post[300] = "\0";
@@ -116,10 +118,10 @@ void cd(char* filename){
             splitPath(tempChar, pre, post);
             i = 0;
             while(pre[i]!='\0'){
-                temp[i] = pre[i];
+                prev[slen(prev)] = pre[i];
                 i++;
             }
-            temp[i] = '/';
+            prev[slen(prev)] = '/';
 
             // split pre into name and ext
             char name[9] = "\0\0\0\0\0\0\0\0\0";
@@ -175,8 +177,9 @@ void cd(char* filename){
         for(int j = 0 ; j < 300 ; j++){
             curDirName[j] = '\0';
         }
-        for(int j = 0 ; j < slen(temp) ; j++){
-            curDirName[j] = temp[j];
+        curDirName[0] = '/';
+        for(int j = 1 ; j < slen(prev) && slen(prev) > 1 ; j++){
+            curDirName[j] = prev[j];
         }
         curTable = table;
         currenDir = (table.table[0].cluster_high << 16 | table.table[0].cluster_low);
