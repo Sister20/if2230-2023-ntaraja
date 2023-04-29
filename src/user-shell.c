@@ -355,6 +355,73 @@ void ls(){
     }
 }
 
+void cp(char* source_dest) {
+    char source[12];
+    char dest[12];
+    int i = 0;
+    while(source_dest[i]!=' '){
+        source[i] = source_dest[i];
+        i++;
+    }
+    i++;
+    int j = 0;
+    while(source_dest[i]!='\0'){
+        dest[j] = source_dest[i];
+        i++;
+        j++;
+    }
+
+    char source_name[9] = "\0\0\0\0\0\0\0\0\0";
+    char source_ext[4] = "\0\0\0\0";
+    readfname(source, (char *)source_name, (char *)source_ext);
+    struct ClusterBuffer cl           = {0};
+    struct FAT32DriverRequest source_request = {
+            .buf                   = &cl,
+            .name                  = "\0\0\0\0\0\0\0\0",
+            .ext                   = "\0\0\0",
+            .parent_cluster_number = currenDir,
+            .buffer_size           = CLUSTER_SIZE,
+    };
+    int32_t retcode = 0;
+    for(int i = 0; i < slen(source_name); i++){
+        source_request.name[i] = source_name[i];
+    }
+    for(int i = 0; i < slen(source_ext); i++){
+        source_request.ext[i] = source_ext[i];
+    }
+    syscall(0, (uint32_t) &source_request, (uint32_t) &retcode, 0);
+    
+    if (retcode == 0) {
+        uint32_t retcode_2 = 0;
+        char dest_name[9] = "\0\0\0\0\0\0\0\0\0";
+        char dest_ext[4] = "\0\0\0\0";
+        readfname(dest, (char *)dest_name, (char *)dest_ext);
+        struct FAT32DriverRequest dest_request = {
+                .buf = &cl,
+                .name = "\0\0\0\0\0\0\0\0",
+                .ext = "\0\0\0",
+                .parent_cluster_number = currenDir,
+                .buffer_size = CLUSTER_SIZE
+        };
+        for(int i = 0; i < slen(dest_name); i++){
+            dest_request.name[i] = dest_name[i];
+        }
+        for(int i = 0; i < slen(dest_ext); i++){
+            dest_request.ext[i] = dest_ext[i];
+        }
+        syscall(1, (uint32_t) &dest_request, (uint32_t) &retcode_2, 0);
+        syscall(2, (uint32_t) &dest_request, (uint32_t) &retcode_2, 0);
+    }
+    else if (retcode == 3){
+        syscall(5, (uint32_t) "cp: cannot stat '", 18, 0xF);
+        syscall(5, (uint32_t) source, 12, 0xF);
+        syscall(5, (uint32_t) "': No such file or directory\n", 29, 0xF);
+    }
+    else {
+        syscall(5, (uint32_t) "cp: cannot copy directory\n", 27, 0xF);
+    }
+}
+
 void dfsPath(char* filename, char* path, struct FAT32DirectoryTable table, char* found){
     // parse filename to name and ext
     char savedPath[300] = "\0";
@@ -558,6 +625,8 @@ int main(void) {
             mkdir(buf + 6);
         } else if(strcmp(buf, "flip a coin", 11)) {
             flipcoin();
+        } else if(strcmp(buf, "cp", 2)) {
+            cp(buf + 3);
         }
     }
 
