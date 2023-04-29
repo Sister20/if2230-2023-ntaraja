@@ -489,6 +489,19 @@ void whereis(char *filename){
     }
 }
 
+void flipcoin(){
+    static uint32_t rand_number = 782439012;
+    // create a random number using lcg
+    rand_number = (rand_number * 1103515245 + 12345) % 4294967296;
+    // get the last bit of the random number
+    uint32_t last_bit = rand_number & 1;
+    if (last_bit == 0){
+        syscall(5, (uint32_t) "Heads\n", 6, 0xf);
+    } else {
+        syscall(5, (uint32_t) "Tails\n", 6, 0xf);
+    }
+}
+
 int main(void) {
     struct ClusterBuffer cl           = {0};
     struct FAT32DriverRequest request = {
@@ -543,6 +556,8 @@ int main(void) {
             ls();
         } else if(strcmp(buf, "mkdir", 5)) {
             mkdir(buf + 6);
+        } else if(strcmp(buf, "flip a coin", 11)) {
+            flipcoin();
         }
     }
 
