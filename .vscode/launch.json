@@ -32,11 +32,35 @@
                     "description": "Get kernel symbols"
                 },
                 {
+                    "text": "add-symbol-file shell_elf",
+                    "description": "Get shell symbols"
+                },
+                {
                     "text": "set output-radix 16",
                     "description": "Use hexadecimal output"
                 }
             ],
             "avoidWindowsConsoleRedirection": true
         },
+        {
+            "name": "Insert",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/inserter",
+            "args": ["shell", "2", "disk.img"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Prepare Insert"
+        }
     ]
 }

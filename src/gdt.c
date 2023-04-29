@@ -28,6 +28,7 @@ static struct GlobalDescriptorTable global_descriptor_table = {
                         .non_system = 0x1,
                         .descriptor_privilege_level = 0x0,
                         .present = 0x1,
+
                         .segment_high = 0xF,
                         .available = 0x0,
                         .long_mode = 0x1,
@@ -44,6 +45,7 @@ static struct GlobalDescriptorTable global_descriptor_table = {
                         .non_system = 0x1,
                         .descriptor_privilege_level = 0x0,
                         .present = 0x1,
+
                         .segment_high = 0xF,
                         .available = 0x0,
                         .long_mode = 0x0,
@@ -60,6 +62,7 @@ static struct GlobalDescriptorTable global_descriptor_table = {
                         .non_system = 0x1,
                         .descriptor_privilege_level = 0x3,
                         .present = 0x1,
+
                         .segment_high = 0xF,
                         .available = 0x0,
                         .long_mode = 0x1,
@@ -76,6 +79,7 @@ static struct GlobalDescriptorTable global_descriptor_table = {
                         .non_system = 0x1,
                         .descriptor_privilege_level = 0x3,
                         .present = 0x1,
+
                         .segment_high = 0xF,
                         .available = 0x0,
                         .long_mode = 0x0,
@@ -92,13 +96,14 @@ static struct GlobalDescriptorTable global_descriptor_table = {
                         .non_system = 0x0,
                         .descriptor_privilege_level = 0x0,
                         .present = 0x1,
+
                         .segment_high = (sizeof(struct TSSEntry) & (0xF << 16)) >> 16,
                         .available = 0x0,
                         .long_mode = 0x0,
-                        .default_operation_size = 0x0,
+                        .default_operation_size = 0x1,
                         .granularity = 0x0,
                         .base_high = 0x00
-                }, {0}
+                }
         }
 };
 
@@ -111,5 +116,5 @@ void gdt_install_tss(void) {
     uint32_t base = (uint32_t) &_interrupt_tss_entry;
     global_descriptor_table.table[5].base_high = (base & (0xFF << 24)) >> 24;
     global_descriptor_table.table[5].base_mid = (base & (0xFF << 16)) >> 16;
-    global_descriptor_table.table[5].base_low = base;
+    global_descriptor_table.table[5].base_low = base & 0xFFFF;
 }

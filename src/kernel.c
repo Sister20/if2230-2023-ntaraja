@@ -22,8 +22,7 @@ _Noreturn void kernel_setup(void) {
     set_tss_register();
 
     allocate_single_user_page_frame((uint8_t *) 0);
-
-    keyboard_state_activate();
+    
     struct FAT32DriverRequest request = {
             .buf                   = (uint8_t *) 0,
             .name                  = "shell",
@@ -32,6 +31,73 @@ _Noreturn void kernel_setup(void) {
             .buffer_size           = 0x100000,
     };
     read(request);
+
+    struct ClusterBuffer cbuf[2];
+    for(int j = 0; j < 2; j++){
+        for (int i = 0; i < CLUSTER_SIZE; i++) {
+            cbuf[j].buf[i] = 'a' + j;
+        }
+    }
+    
+    struct FAT32DirectoryTable table;
+
+    struct FAT32DriverRequest ikanaide = {
+            .buf = &table,
+            .name = "ikanaide",
+            .ext = "\0\0\0",
+            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size = 0
+    };
+    write(ikanaide);
+
+    struct FAT32DriverRequest ikanaide2 = {
+            .buf = cbuf,
+            .name = "filefile",
+            .ext = "exe",
+            .parent_cluster_number = ROOT_CLUSTER_NUMBER,
+            .buffer_size = CLUSTER_SIZE
+    };
+    write(ikanaide2);
+
+    read_directory(ikanaide);
+    struct FAT32DriverRequest new_file = {
+            .buf = cbuf,
+            .name = "filefile",
+            .ext = "exe",
+            .parent_cluster_number = (table.table[0].cluster_high << 16 | table.table[0].cluster_low),
+            .buffer_size = CLUSTER_SIZE
+    };
+    write(new_file);
+
+    struct FAT32DirectoryTable table2;
+    struct FAT32DriverRequest folder_ikanaide = {
+            .buf = &table2,
+            .name = "cakcok",
+            .ext = "\0\0\0",
+            .parent_cluster_number = (table.table[0].cluster_high << 16 | table.table[0].cluster_low),
+            .buffer_size = 0
+    };
+    write(folder_ikanaide);
+
+    struct FAT32DirectoryTable table3;
+    struct FAT32DriverRequest folder_ikanaide2 = {
+            .buf = &table3,
+            .name = "cicak",
+            .ext = "\0\0\0",
+            .parent_cluster_number = (table.table[0].cluster_high << 16 | table.table[0].cluster_low),
+            .buffer_size = 0
+    };
+    write(folder_ikanaide2);
+
+    read_directory(folder_ikanaide2);
+    struct FAT32DriverRequest file_3 = {
+            .buf = cbuf,
+            .name = "filefile",
+            .ext = "exe",
+            .parent_cluster_number = (table3.table[0].cluster_high << 16 | table3.table[0].cluster_low),
+            .buffer_size = CLUSTER_SIZE
+    };
+    write(file_3);
 
     set_tss_kernel_current_stack();
     kernel_execute_user_program((uint8_t *) 0);

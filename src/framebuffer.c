@@ -22,17 +22,36 @@ void framebuffer_get_cursor(uint8_t *r, uint8_t *c) {
     *c = pos % 80;
 }
 
-void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) {
-    // TODO : Implement    
+void framebuffer_write(uint8_t row, uint8_t col, char c, uint8_t fg, uint8_t bg) { 
     uint8_t attrib = (bg << 4) | (fg&0x0F);
-    volatile uint16_t * where = (volatile uint16_t *)0xB8000 + (row*80 + col);
+    volatile uint16_t * where = (uint16_t *) MEMORY_FRAMEBUFFER + (row*80 + col);
+
+    // if in the last row and entered, scroll
+    if (row == 24 && c == '\n'){
+        for (int i = 0; i < 80*24*2; i+=2) {
+            memcpy((void*)MEMORY_FRAMEBUFFER+i, (void*)MEMORY_FRAMEBUFFER+i+160, 1);
+            memcpy((void*)MEMORY_FRAMEBUFFER+i+1, (void*)MEMORY_FRAMEBUFFER+i+161, 1);
+        }
+        for (int i = 0; i < 80*2; i+=2) {
+            memset((void*)MEMORY_FRAMEBUFFER+80*24*2+i, 0x00, 1);
+            memset((void*)MEMORY_FRAMEBUFFER+80*24*2+i+1, 0x07, 1);
+        }
+        // set framecursor to be at start of last row
+        framebuffer_set_cursor(24, 0);
+        return;
+    }
+
+    // change if c is \n
+    if (c == '\n') {
+        framebuffer_set_cursor(row+1, 0);
+        return;
+    }
     memset((void*)where, c, 1);
     memset((void*)where+1, attrib, 1);
 }
 
 void framebuffer_clear(void) {
-    // TODO : Implement
-    volatile uint8_t * where = (volatile uint8_t *)0xB8000;
+    volatile uint8_t * where = MEMORY_FRAMEBUFFER;
     for(int i = 0 ; i < 25*80*2 ; i+=2){
         memset((void*)where+i, 0x00, 1);
         memset((void*)where+i+1, 0x07, 1);

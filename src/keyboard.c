@@ -32,6 +32,7 @@ struct KeyboardDriverState keyboard_state;
 */
 void keyboard_clear_buffer(void){
     keyboard_state.buffer_index = 0;
+    keyboard_state.buffer_index_max = 0;
     memset(keyboard_state.keyboard_buffer, 0, KEYBOARD_BUFFER_SIZE);
 }
 
@@ -97,7 +98,8 @@ void keyboard_state_activate(void){
 }
 
 void get_keyboard_buffer(char *buf){
-    memcpy(buf, keyboard_state.keyboard_buffer, keyboard_state.buffer_index);
+    memcpy(buf, keyboard_state.keyboard_buffer, KEYBOARD_BUFFER_SIZE);
+    keyboard_clear_buffer();
 }
 
 bool is_keyboard_blocking(void){
@@ -116,12 +118,14 @@ void keyboard_isr(void) {
             keyboard_delete();
         }
         else if(mapped_char == '\n'){
-            framebuffer_set_cursor(r+1,0);
+            framebuffer_write(r,c,'\n',0x0F,0x00);
+            // framebuffer_set_cursor(r+1,0);
             keyboard_state.keyboard_buffer[keyboard_state.buffer_index] = '\0';
-            keyboard_clear_buffer();
+            keyboard_state.buffer_index++;keyboard_state.buffer_index_max++;
             keyboard_state.keyboard_input_on = FALSE;
-            keyboard_state.buffer_index_max = 0;
-            keyboard_state.buffer_index = 0;
+            // keyboard_clear_buffer();
+            // keyboard_state.buffer_index_max = 0;
+            // keyboard_state.buffer_index = 0;
         }
         // tab is 4 spaces, default of most IDEs
         else if(mapped_char == '\t'){

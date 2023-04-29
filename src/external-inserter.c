@@ -16,13 +16,13 @@ struct FAT32DriverRequest {
     uint32_t  buffer_size;
 } __attribute__((packed));
 
-void*  memcpy(void* restrict dest, const void* restrict src, size_t n);
+extern void*  memcpy(void* restrict dest, const void* restrict src, size_t n);
 
-void   initialize_filesystem_fat32(void);
-int8_t read(struct FAT32DriverRequest request);
-int8_t read_directory(struct FAT32DriverRequest request);
-int8_t write(struct FAT32DriverRequest request);
-int8_t delete(struct FAT32DriverRequest request);
+extern void   initialize_filesystem_fat32(void);
+extern int8_t read(struct FAT32DriverRequest request);
+extern int8_t read_directory(struct FAT32DriverRequest request);
+extern int8_t write(struct FAT32DriverRequest request);
+extern int8_t delete(struct FAT32DriverRequest request);
 
 
 
@@ -49,19 +49,19 @@ int main(int argc, char *argv[]) {
     }
 
     // Read storage into memory, requiring 4 MB memory
-    image_storage     = malloc(4*1024*1024);
-    file_buffer       = malloc(4*1024*1024);
+    image_storage     = calloc(16*1024*1024, sizeof(uint8_t));
+    file_buffer       = calloc(16*1024*1024, sizeof(uint8_t));
     FILE *fptr        = fopen(argv[3], "r");
-    fread(image_storage, 4*1024*1024, 1, fptr);
+    fread(image_storage, 16*1024*1024, 1, fptr);
     fclose(fptr);
 
     // Read target file, assuming file is less than 4 MiB
     FILE *fptr_target = fopen(argv[1], "r");
-    size_t filesize   = 0;
+    size_t filesize;
     if (fptr_target == NULL)
         filesize = 0;
     else {
-        fread(file_buffer, 4*1024*1024, 1, fptr_target);
+        fread(file_buffer, 16*1024*1024, 1, fptr_target);
         fseek(fptr_target, 0, SEEK_END);
         filesize = ftell(fptr_target);
         fclose(fptr_target);
@@ -72,12 +72,17 @@ int main(int argc, char *argv[]) {
 
     // FAT32 operations
     initialize_filesystem_fat32();
+
+    uint32_t cluster;
+    sscanf(argv[2], "%u",  &cluster);
+
     struct FAT32DriverRequest request = {
             .buf         = file_buffer,
             .ext         = "\0\0\0",
             .buffer_size = filesize,
+            .parent_cluster_number = cluster
     };
-    sscanf(argv[2], "%u",  &request.parent_cluster_number);
+
     sscanf(argv[1], "%8s", request.name);
     int retcode = write(request);
     if (retcode == 0)
@@ -91,7 +96,7 @@ int main(int argc, char *argv[]) {
 
     // Write image in memory into original, overwrite them
     fptr              = fopen(argv[3], "w");
-    fwrite(image_storage, 4*1024*1024, 1, fptr);
+    fwrite(image_storage, 16*1024*1024, 1, fptr);
     fclose(fptr);
 
     return 0;

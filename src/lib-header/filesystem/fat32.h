@@ -166,11 +166,11 @@ uint32_t cluster_to_lba(uint32_t cluster);
 /**
  * Initialize DirectoryTable value with parent DirectoryEntry and directory name
  *
- * @param dir_table          Pointer to directory table
+ * @param dir          Pointer to directory table
  * @param name               8-byte char for directory name
  * @param parent_dir_cluster Parent directory cluster number
  */
-void init_directory_table(struct FAT32DirectoryTable *dir_table, char *name, uint32_t parent_dir_cluster);
+void init_directory_table(struct FAT32DirectoryTable *dir, char *name, uint32_t parent_dir_cluster);
 
 /**
  * Checking whether filesystem signature is missing or not in boot sector

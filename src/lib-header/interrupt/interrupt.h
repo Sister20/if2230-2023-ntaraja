@@ -3,6 +3,7 @@
 
 #include "../stdtype.h"
 
+#define GENERAL_PROTECTION_FAULT 0xD
 #define PAGE_FAULT 0xE
 
 /* -- PIC constants -- */
