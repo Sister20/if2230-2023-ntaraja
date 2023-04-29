@@ -357,6 +357,10 @@ void ls(){
 
 void dfsPath(char* filename, char* path, struct FAT32DirectoryTable table, char* found){
     // parse filename to name and ext
+    char savedPath[300] = "\0";
+    for (int i = 0; i < slen(path); i++) {
+        savedPath[i] = path[i];
+    }
     char name[9] = "\0\0\0\0\0\0\0\0\0";
     char ext[4] = "\0\0\0\0";
     readfname(filename, (char *)name, (char *)ext);
@@ -450,6 +454,14 @@ void dfsPath(char* filename, char* path, struct FAT32DirectoryTable table, char*
             syscall(1, (uint32_t) &newRequest, (uint32_t) &retcode, 0);
             if (retcode == 0){
                 dfsPath(filename, newPath, newTable, found);
+
+                // reset path
+                for (int j = 0; j < 300 ; j++){
+                    path[j] = '\0';
+                }
+                for (int j = 0; j < slen(savedPath); j++){
+                    path[j] = savedPath[j];
+                }
             }
         }
     }
@@ -463,7 +475,9 @@ void whereis(char *filename){
 
     // list to store all the paths found (for multiple file with same name)
     char found[2048];
-    found[0] = '\0';
+    for (int i = 0; i < 2048; i++){
+        found[i] = '\0';
+    }
     char path[2048];
     path[0] = '/';
     path[1] = '\0';
