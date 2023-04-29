@@ -703,7 +703,9 @@ void ls(){
         request2.name[i] = curTable.table[0].name[i];
     }
     syscall(1, (uint32_t) &request2, (uint32_t) &retcode, 0);
-
+    if (currenDir == ROOT_CLUSTER_NUMBER){
+        rootTable = curTable;
+    }
     struct FAT32DirectoryTable table = curTable;
     for(int i = 1 ; i < 64 ; i++){
         if(table.table[i].attribute || table.table[i].cluster_high || table.table[i].cluster_low){
