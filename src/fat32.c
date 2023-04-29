@@ -184,7 +184,7 @@ void add_directory_entry(struct FAT32DriverRequest request, uint32_t cluster) {
 
 int8_t read_directory(struct FAT32DriverRequest request) {
 //    read_clusters(&driver.dir_table_buf, request.parent_cluster_number, 1);
-//    read_to_dir_table(request.parent_cluster_number, 1);
+    read_to_dir_table(request.parent_cluster_number, 1);
 
     int32_t index = dir_table_search(request.name, request.ext);
 
