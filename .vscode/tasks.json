@@ -6,7 +6,7 @@
             "label": "Build OS",
             "command": "make",
             "args": [
-                "build",
+                "all",
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -19,7 +19,7 @@
         {
             "type": "shell",
             "label": "Launch QEMU",
-            "command": "echo Starting QEMU&qemu-system-i386 -s -S -cdrom os2023.iso",
+            "command": "echo Starting QEMU&qemu-system-i386 -s -S -drive format=raw,file=disk.img,if=ide,index=0,media=disk -cdrom os2023.iso",
             "isBackground": true,
             "dependsOn": "Build OS",
             "options": {
@@ -45,6 +45,13 @@
             "type": "shell",
             "label": "Exit QEMU",
             "command": "pkill -f qemu || test $? -eq 1"
+        },
+        {
+            "type": "shell",
+            "label": "Prepare Insert",
+            "command": "make",
+            "args": ["rebuild-insert"],
+            "options": {"cwd": "${workspaceFolder}"}
         }
     ],
 }
